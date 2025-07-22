@@ -67,8 +67,10 @@ export const ServiceCarousel = ({ images, className = '', textSectionHeight }: S
     >
       <img 
         src={images[currentIndex]} 
-        alt="Service" 
+        alt={`Фото услуги ${currentIndex + 1} - персональные тренировки и консультации с фитнес тренером`}
         className="w-full h-full object-cover transition-all duration-500"
+        loading="lazy"
+        decoding="async"
       />
       
       {images.length > 1 && (

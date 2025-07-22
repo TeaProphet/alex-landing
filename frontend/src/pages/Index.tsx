@@ -1,5 +1,6 @@
 import { SocialIcons } from '@/components/SocialIcons';
 import { ServiceSection } from '@/components/ServiceSection';
+import { StructuredData } from '@/components/StructuredData';
 import { Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchContacts, fetchServicesBlocks, getImageUrl, type ContactsData, type ServiceBlockData } from '@/lib/strapiApi';
@@ -50,14 +51,18 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+    <>
+      <StructuredData contactsData={contactsData} />
+      <main className="min-h-screen">
+        {/* Hero Section */}
+        <header className="relative h-screen flex items-center justify-center overflow-hidden" role="banner">
         <div className="absolute inset-0">
           <img 
             src={contactsData?.mainPhoto?.url ? getImageUrl(contactsData.mainPhoto.url) : trainerHero} 
-            alt="Alexander Paskhalis" 
+            alt="Александр Пасхалис - персональный фитнес тренер в спортзале. Профессиональный тренер с опытом более 15 лет" 
             className="w-full h-[120%] object-cover"
+            loading="eager"
+            fetchPriority="high"
             style={{
               transform: `translateY(${scrollY * 0.5}px)`,
             }}
@@ -94,25 +99,25 @@ const Index = () => {
             </div>
           </div>
         </div>
-      </section>
+        </header>
 
-      {/* About Introduction */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="text-center">
-            <p className="text-lg lg:text-xl leading-relaxed text-muted-foreground">
-              {contactsData?.greeting || 
-                "Привет! Меня зовут Александр, я персональный фитнес тренер. Создатель божественных фигур. Гуру в сфере тренинга и нутрициологии. Приведу Вас к любой цели, от \"просто похудеть\" - до выхода на соревнования! Со мной ваша забота о себе под профессиональным контролем круглосуточно!"
-              }
-            </p>
+        {/* About Introduction */}
+        <section className="py-16 bg-background" aria-labelledby="intro-heading">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <div className="text-center">
+              <p id="intro-heading" className="text-lg lg:text-xl leading-relaxed text-muted-foreground">
+                {contactsData?.greeting || 
+                  "Привет! Меня зовут Александр, я персональный фитнес тренер. Создатель божественных фигур. Гуру в сфере тренинга и нутрициологии. Приведу Вас к любой цели, от \"просто похудеть\" - до выхода на соревнования! Со мной ваша забота о себе под профессиональным контролем круглосуточно!"
+                }
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* About Me List */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Обо мне</h2>
+        {/* About Me List */}
+        <section className="py-16 bg-muted/30" aria-labelledby="about-heading">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <h2 id="about-heading" className="text-3xl lg:text-4xl font-bold text-center mb-12">Обо мне</h2>
           
           <div className="space-y-6">
             {contactsData?.aboutInfo ? (
@@ -134,23 +139,25 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Services */}
-      <div className="bg-background">
-        {servicesData?.map((service, index) => (
-          <ServiceSection
-            key={service.id}
-            title={service.title}
-            description={service.text}
-            images={service.photos.map(photo => getImageUrl(photo.url))}
-            imageLeft={index % 2 !== 0}
-            onContactClick={scrollToContacts}
-          />
-        ))}
-      </div>
+        {/* Services */}
+        <section className="bg-background" aria-labelledby="services-heading">
+          <h2 id="services-heading" className="sr-only">Услуги персонального тренера</h2>
+          {servicesData?.map((service, index) => (
+            <article key={service.id}>
+              <ServiceSection
+                title={service.title}
+                description={service.text}
+                images={service.photos.map(photo => getImageUrl(photo.url))}
+                imageLeft={index % 2 !== 0}
+                onContactClick={scrollToContacts}
+              />
+            </article>
+          ))}
+        </section>
 
-      {/* Contacts */}
-      <section id="contacts" className="py-20 bg-gradient-dark">
-        <div className="container mx-auto px-4 text-center">
+        {/* Contacts */}
+        <footer id="contacts" className="py-20 bg-gradient-dark" role="contentinfo">
+          <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4">
             ЕСЛИ ВЫ НЕДОВОЛЬНЫ СВОЕЙ ФИГУРОЙ,
           </h2>
@@ -176,8 +183,9 @@ const Index = () => {
             {contactsData?.phoneNumber && <p>{contactsData.phoneNumber}</p>}
           </div>
         </div>
-      </section>
-    </div>
+        </footer>
+      </main>
+    </>
   );
 };
 
