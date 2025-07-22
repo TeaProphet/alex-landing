@@ -4,11 +4,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 interface ServiceCarouselProps {
   images: string[];
   className?: string;
+  textSectionHeight: number;
 }
 
-export const ServiceCarousel = ({ images, className = '' }: ServiceCarouselProps) => {
+export const ServiceCarousel = ({ images, className = '', textSectionHeight }: ServiceCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [optimalHeight, setOptimalHeight] = useState(400);
+  const [containerHeight, setContainerHeight] = useState(400);
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -19,46 +20,50 @@ export const ServiceCarousel = ({ images, className = '' }: ServiceCarouselProps
   };
 
   useEffect(() => {
-    const calculateOptimalHeight = async () => {
-      const aspectRatios: number[] = [];
+    const calculateHeight = async () => {
+      if (images.length === 0) return;
+
+      const imageHeights: number[] = [];
+      const viewportWidth = window.innerWidth * 0.5;
       
+      // Calculate height for each image when width is 50vw
       for (const imageUrl of images) {
         try {
-          const aspectRatio = await new Promise<number>((resolve) => {
+          const height = await new Promise<number>((resolve) => {
             const img = new Image();
-            img.onload = () => resolve(img.width / img.height);
-            img.onerror = () => resolve(1.5); // fallback aspect ratio
+            img.onload = () => {
+              const aspectRatio = img.width / img.height;
+              const calculatedHeight = viewportWidth / aspectRatio;
+              resolve(calculatedHeight);
+            };
+            img.onerror = () => resolve(viewportWidth / 1.5); // fallback height
             img.src = imageUrl;
           });
-          aspectRatios.push(aspectRatio);
+          imageHeights.push(height);
         } catch {
-          aspectRatios.push(1.5); // fallback aspect ratio
+          imageHeights.push(viewportWidth / 1.5); // fallback height
         }
       }
       
-      // Calculate median aspect ratio for better balance
-      const sortedRatios = aspectRatios.sort((a, b) => a - b);
-      const medianRatio = sortedRatios[Math.floor(sortedRatios.length / 2)];
+      // Calculate medium (average) height of all images
+      const averageHeight = imageHeights.reduce((sum, height) => sum + height, 0) / imageHeights.length;
       
-      // Convert to height based on a standard width (assuming 50vw)
-      // Using viewport units for responsive calculation
-      const baseWidth = window.innerWidth * 0.5;
-      const calculatedHeight = baseWidth / medianRatio;
+      // Use the larger of average height or text section height
+      let finalHeight = Math.max(averageHeight, textSectionHeight || 0);
       
-      // Clamp between reasonable bounds
-      const clampedHeight = Math.max(300, Math.min(700, calculatedHeight));
-      setOptimalHeight(clampedHeight);
+      // Apply reasonable bounds
+      finalHeight = Math.max(400, Math.min(800, finalHeight));
+      
+      setContainerHeight(finalHeight);
     };
 
-    if (images.length > 0) {
-      calculateOptimalHeight();
-    }
-  }, [images]);
+    calculateHeight();
+  }, [images, textSectionHeight]);
 
   return (
     <div 
       className={`relative w-full overflow-hidden ${className}`}
-      style={{ height: `${optimalHeight}px` }}
+      style={{ height: `${containerHeight}px` }}
     >
       <img 
         src={images[currentIndex]} 

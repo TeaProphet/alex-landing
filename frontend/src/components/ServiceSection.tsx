@@ -1,5 +1,6 @@
 import { ServiceCarousel } from './ServiceCarousel';
 import { Button } from './ui/button';
+import { useState, useRef, useEffect } from 'react';
 
 interface ServiceSectionProps {
   title: string;
@@ -16,16 +17,29 @@ export const ServiceSection = ({
   imageLeft = false,
   onContactClick 
 }: ServiceSectionProps) => {
+  const [textSectionHeight, setTextSectionHeight] = useState(0);
+  const textRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (textRef.current) {
+      const height = textRef.current.offsetHeight;
+      setTextSectionHeight(height);
+    }
+  }, []);
+
   return (
     <section className="w-full">
       <div className={`flex ${imageLeft ? 'flex-row-reverse' : ''}`}>
         {/* Image Section - 50% */}
-        <div className="w-1/2 relative">
-          <ServiceCarousel images={images} />
+        <div className="w-1/2">
+          <ServiceCarousel images={images} textSectionHeight={textSectionHeight} />
         </div>
         
         {/* Text Section - 50% */}
-        <div className="w-1/2 flex items-center justify-center p-8 lg:p-12 min-h-[300px]">
+        <div 
+          ref={textRef}
+          className="w-1/2 flex items-center justify-center p-8 lg:p-12 min-h-[400px]"
+        >
           <div className="space-y-6 max-w-lg">
             <h3 className="text-2xl lg:text-4xl font-bold text-foreground">
               {title}
