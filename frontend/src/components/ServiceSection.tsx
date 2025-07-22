@@ -17,20 +17,20 @@ export const ServiceSection = ({
   onContactClick 
 }: ServiceSectionProps) => {
   return (
-    <section className="py-16">
-      <div className="container mx-auto px-4">
-        <div className={`grid lg:grid-cols-2 gap-12 items-center ${
-          imageLeft ? 'lg:grid-flow-col' : ''
-        }`}>
-          <div className={`${imageLeft ? 'lg:order-2' : ''}`}>
-            <ServiceCarousel images={images} />
-          </div>
-          
-          <div className={`space-y-6 ${imageLeft ? 'lg:order-1' : ''}`}>
-            <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-6">
+    <section className="w-full">
+      <div className={`flex ${imageLeft ? 'flex-row-reverse' : ''}`}>
+        {/* Image Section - 50% */}
+        <div className="w-1/2 relative">
+          <ServiceCarousel images={images} />
+        </div>
+        
+        {/* Text Section - 50% */}
+        <div className="w-1/2 flex items-center justify-center p-8 lg:p-12 min-h-[300px]">
+          <div className="space-y-6 max-w-lg">
+            <h3 className="text-2xl lg:text-4xl font-bold text-foreground">
               {title}
             </h3>
-            <div className="text-muted-foreground leading-relaxed whitespace-pre-line">
+            <div className="text-muted-foreground leading-relaxed whitespace-pre-line text-base lg:text-lg">
               {description}
             </div>
             <Button 
