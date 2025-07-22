@@ -29,15 +29,44 @@ export const ServiceSection = ({
 
   return (
     <section className="w-full">
-      <div className={`flex ${imageLeft ? 'flex-row-reverse' : ''}`}>
-        {/* Image Section - 50% */}
+      {/* Mobile Layout: Text above, Image below */}
+      <div className="flex flex-col md:hidden">
+        {/* Text Section - Mobile */}
+        <div 
+          ref={textRef}
+          className="w-full flex items-center justify-center p-6 min-h-[300px]"
+        >
+          <div className="space-y-4 max-w-lg text-center">
+            <h3 className="text-xl font-bold text-foreground">
+              {title}
+            </h3>
+            <div className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm">
+              {description}
+            </div>
+            <Button 
+              onClick={onContactClick}
+              className="bg-gradient-primary hover:opacity-90 text-white font-bold px-6 py-4 text-base rounded-lg shadow-elegant transition-all duration-300 hover:scale-105"
+            >
+              ХОЧУ
+            </Button>
+          </div>
+        </div>
+        
+        {/* Image Section - Mobile */}
+        <div className="w-full">
+          <ServiceCarousel images={images} textSectionHeight={0} />
+        </div>
+      </div>
+
+      {/* Desktop Layout: Side by side */}
+      <div className={`hidden md:flex ${imageLeft ? 'flex-row-reverse' : ''}`}>
+        {/* Image Section - Desktop 50% */}
         <div className="w-1/2">
           <ServiceCarousel images={images} textSectionHeight={textSectionHeight} />
         </div>
         
-        {/* Text Section - 50% */}
+        {/* Text Section - Desktop 50% */}
         <div 
-          ref={textRef}
           className="w-1/2 flex items-center justify-center p-8 lg:p-12 min-h-[400px]"
         >
           <div className="space-y-6 max-w-lg">
