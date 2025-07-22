@@ -4,8 +4,11 @@ import { Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchContacts, fetchServicesBlocks, getImageUrl, type ContactsData, type ServiceBlockData } from '@/lib/strapiApi';
 import trainerHero from '@/assets/trainer-hero.jpg';
+import { useState, useEffect } from 'react';
 
 const Index = () => {
+  const [scrollY, setScrollY] = useState(0);
+
   const { data: contactsData, isLoading: contactsLoading } = useQuery<ContactsData>({
     queryKey: ['contacts'],
     queryFn: fetchContacts,
@@ -15,6 +18,12 @@ const Index = () => {
     queryKey: ['services-blocks'],
     queryFn: fetchServicesBlocks,
   });
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToContacts = () => {
     const contactsElement = document.getElementById('contacts');
@@ -48,7 +57,10 @@ const Index = () => {
           <img 
             src={contactsData?.mainPhoto?.url ? getImageUrl(contactsData.mainPhoto.url) : trainerHero} 
             alt="Alexander Paskhalis" 
-            className="w-full h-full object-cover"
+            className="w-full h-[120%] object-cover"
+            style={{
+              transform: `translateY(${scrollY * 0.5}px)`,
+            }}
           />
           <div className="absolute inset-0 bg-black/40" />
         </div>
