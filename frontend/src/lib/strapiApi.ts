@@ -1,0 +1,79 @@
+import { API_CONFIG, apiHeaders } from './api';
+
+export interface ContactsData {
+  id: number;
+  documentId: string;
+  telegramLogin?: string;
+  instagramLogin?: string;
+  whatsappPhone?: string;
+  phoneNumber?: string;
+  emailAddress?: string;
+  mainPhoto?: {
+    url: string;
+    alternativeText?: string;
+  };
+  greeting?: string;
+  aboutInfo?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+  locale: string;
+}
+
+export interface ServiceBlockData {
+  id: number;
+  documentId: string;
+  title: string;
+  text: string;
+  photos: Array<{
+    url: string;
+    alternativeText?: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+  locale: string;
+}
+
+export async function fetchContacts(): Promise<ContactsData> {
+  try {
+    const response = await fetch(`${API_CONFIG.baseURL}/contacts?populate=*`, {
+      headers: apiHeaders,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    throw error;
+  }
+}
+
+export async function fetchServicesBlocks(): Promise<ServiceBlockData[]> {
+  try {
+    const response = await fetch(`${API_CONFIG.baseURL}/services-block?populate=*`, {
+      headers: apiHeaders,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching services blocks:', error);
+    throw error;
+  }
+}
+
+export function getImageUrl(imageUrl: string): string {
+  if (imageUrl.startsWith('http')) {
+    return imageUrl;
+  }
+  return `http://localhost:1337${imageUrl}`;
+}

@@ -65,8 +65,17 @@ npm run preview    # Preview production build
 - Static content is currently hardcoded in frontend components
 - Images are stored in `/backend/public/uploads/` with automatic resizing
 
+## API Integration
+- Frontend fetches dynamic content from Strapi backend
+- **API Configuration**: Located in `/frontend/src/lib/api.ts`
+- **API Services**: Located in `/frontend/src/lib/strapiApi.ts`
+- **Contact Data**: Includes email, phone, social media logins, main photo, greeting text, and about info
+- **Services Data**: Dynamic service blocks with title, rich text content, and multiple photos
+
 ## Development Notes
 - Frontend uses Russian language content
-- Contact information: nr-star@mail.ru, +79805402021
+- Content is now dynamic from Strapi CMS (falls back to hardcoded defaults if API fails)
+- Backend must be running on localhost:1337 for full functionality
+- Uses React Query for API state management with loading states
 - No authentication system implemented
 - No form submissions - contact via social media/phone only

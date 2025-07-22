@@ -20,6 +20,12 @@
     "whatsappPhone": {
       "type": "string"
     },
+    "phoneNumber": {
+      "type": "string"
+    },
+    "emailAddress": {
+      "type": "string"
+    },
     "mainPhoto": {
       "type": "media",
       "multiple": false,
@@ -30,11 +36,11 @@
         "audios"
       ]
     },
-    "phoneNumber": {
-      "type": "string"
+    "greeting": {
+      "type": "text"
     },
-    "emailAddress": {
-      "type": "string"
+    "aboutInfo": {
+      "type": "richtext"
     }
   }
 }

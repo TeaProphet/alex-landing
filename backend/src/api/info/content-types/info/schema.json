@@ -1,0 +1,31 @@
+{
+  "kind": "singleType",
+  "collectionName": "infos",
+  "info": {
+    "singularName": "info",
+    "pluralName": "infos",
+    "displayName": "info"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "mainPhoto": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "greeting": {
+      "type": "richtext"
+    },
+    "about": {
+      "type": "richtext"
+    }
+  }
+}

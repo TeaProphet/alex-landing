@@ -384,10 +384,12 @@ export interface ApiContactsContacts extends Struct.SingleTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    aboutInfo: Schema.Attribute.RichText;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     emailAddress: Schema.Attribute.String;
+    greeting: Schema.Attribute.Text;
     instagramLogin: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -403,6 +405,33 @@ export interface ApiContactsContacts extends Struct.SingleTypeSchema {
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     whatsappPhone: Schema.Attribute.String;
+  };
+}
+
+export interface ApiInfoInfo extends Struct.SingleTypeSchema {
+  collectionName: 'infos';
+  info: {
+    displayName: 'info';
+    pluralName: 'infos';
+    singularName: 'info';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    about: Schema.Attribute.RichText;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    greeting: Schema.Attribute.RichText;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::info.info'> &
+      Schema.Attribute.Private;
+    mainPhoto: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -950,6 +979,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::contacts.contacts': ApiContactsContacts;
+      'api::info.info': ApiInfoInfo;
       'api::services-blocks.services-blocks': ApiServicesBlocksServicesBlocks;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
