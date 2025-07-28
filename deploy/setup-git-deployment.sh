@@ -6,7 +6,7 @@
 echo "🚀 Setting up Git-based deployment..."
 
 PROJECT_DIR="/var/www/fitness-trainer"
-REPO_URL="https://github.com/yourusername/alex-landing.git"  # Change this!
+REPO_URL="https://github.com/TeaProphet/alex-landing.git"
 
 # Check if git is installed
 if ! command -v git &> /dev/null; then

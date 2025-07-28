@@ -48,7 +48,7 @@ module.exports = {
       user: 'deploy',
       host: 'your-server-ip',
       ref: 'origin/main',
-      repo: 'your-git-repo-url',
+      repo: 'https://github.com/TeaProphet/alex-landing.git',
       path: '/var/www/fitness-trainer',
       'post-deploy': 'npm install && npm run build && pm2 reload ecosystem.config.js --env production && pm2 save'
     }
