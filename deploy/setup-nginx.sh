@@ -7,7 +7,8 @@ set -e
 echo "🌐 Setting up Nginx for fitness-trainer.online..."
 
 # Copy Nginx configuration
-sudo cp nginx.conf /etc/nginx/sites-available/fitness-trainer.online
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+sudo cp "$SCRIPT_DIR/nginx.conf" /etc/nginx/sites-available/fitness-trainer.online
 
 # Create symlink to enable site
 sudo ln -sf /etc/nginx/sites-available/fitness-trainer.online /etc/nginx/sites-enabled/
