@@ -58,12 +58,6 @@ echo "Domain: $DOMAIN"
 echo "Target Directory: $PROJECT_DIR"
 echo ""
 
-# Check if running as root
-if [ "$EUID" -eq 0 ]; then
-    print_error "Don't run this script as root! Run as regular user with sudo access."
-    exit 1
-fi
-
 # Step 1: System Update
 print_step "Updating system packages"
 sudo apt update && sudo apt upgrade -y
