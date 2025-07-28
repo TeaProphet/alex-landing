@@ -112,10 +112,28 @@ print_success "Certbot installed"
 
 # Step 7: Configure firewall
 print_step "Configuring firewall"
-sudo ufw allow ssh
-sudo ufw allow 'Nginx Full'
-sudo ufw --force enable
-print_success "Firewall configured"
+if command -v ufw &> /dev/null; then
+    sudo ufw allow ssh
+    sudo ufw allow 'Nginx Full'
+    sudo ufw --force enable
+    print_success "UFW firewall configured"
+else
+    print_warning "UFW not available, installing..."
+    sudo apt install -y ufw
+    if [ $? -eq 0 ]; then
+        sudo ufw allow ssh
+        sudo ufw allow 'Nginx Full' 
+        sudo ufw --force enable
+        print_success "UFW installed and configured"
+    else
+        print_warning "UFW installation failed, using iptables as fallback"
+        # Basic iptables rules as fallback
+        sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+        sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+        sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+        print_success "Basic firewall rules applied"
+    fi
+fi
 
 # Step 8: Clone and setup application
 print_step "Setting up application from Git repository"
