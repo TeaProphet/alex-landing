@@ -13,7 +13,7 @@ export const StructuredData = ({ contactsData }: StructuredDataProps) => {
       "name": "Александр Пасхалис",
       "jobTitle": "Персональный фитнес тренер",
       "description": "Персональный фитнес тренер с опытом более 15 лет. Эксперт в области силовых тренировок, функциональной подготовки и нутрициологии.",
-      "url": "https://your-domain.com",
+      "url": "http://fitness-trainer.online",
       "image": contactsData?.mainPhoto?.url || "/trainer-hero.jpg",
       "email": contactsData?.emailAddress || "nr-star@mail.ru",
       "telephone": contactsData?.phoneNumber || "+79805402021",
@@ -28,9 +28,20 @@ export const StructuredData = ({ contactsData }: StructuredDataProps) => {
         "Подготовка к соревнованиям"
       ],
       "hasCredential": "Опыт работы более 15 лет",
-      "serviceArea": {
-        "@type": "Country",
-        "name": "Россия"
+      "serviceArea": [
+        {
+          "@type": "Country",
+          "name": "Россия"
+        },
+        {
+          "@type": "AdministrativeArea",
+          "name": "Москва"
+        }
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "RU",
+        "addressRegion": "Россия"
       },
       "priceRange": "2000₽",
       "availableService": [

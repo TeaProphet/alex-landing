@@ -1,0 +1,37 @@
+{
+  "name": "Александр Пасхалис - Персональный фитнес тренер",
+  "short_name": "Фитнес тренер",
+  "description": "Персональный фитнес тренер с опытом более 15 лет. Онлайн консультации, персональные тренировки, программы питания.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["fitness", "health", "lifestyle"],
+  "keywords": ["фитнес", "тренер", "персональный тренер", "онлайн тренировки", "питание"]
+}

@@ -75,5 +75,6 @@ export function getImageUrl(imageUrl: string): string {
   if (imageUrl.startsWith('http')) {
     return imageUrl;
   }
-  return `http://localhost:1337${imageUrl}`;
+  const baseUrl = import.meta.env.VITE_STRAPI_URL || 'http://localhost:1337';
+  return `${baseUrl}${imageUrl}`;
 }

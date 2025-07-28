@@ -4,7 +4,6 @@ import { StructuredData } from '@/components/StructuredData';
 import { Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchContacts, fetchServicesBlocks, getImageUrl, type ContactsData, type ServiceBlockData } from '@/lib/strapiApi';
-import trainerHero from '@/assets/trainer-hero.jpg';
 import { useState, useEffect } from 'react';
 
 const Index = () => {
@@ -58,8 +57,8 @@ const Index = () => {
         <header className="relative h-screen flex items-center justify-center overflow-hidden" role="banner">
         <div className="absolute inset-0">
           <img 
-            src={contactsData?.mainPhoto?.url ? getImageUrl(contactsData.mainPhoto.url) : trainerHero} 
-            alt="Александр Пасхалис - персональный фитнес тренер в спортзале. Профессиональный тренер с опытом более 15 лет" 
+            src={contactsData?.mainPhoto?.url ? getImageUrl(contactsData.mainPhoto.url) : '/trainer-hero.jpg'} 
+            alt="Александр Пасхалис - персональный фитнес тренер Россия, онлайн консультации по тренировкам и питанию, 15+ лет опыта" 
             className="w-full h-[120%] object-cover"
             loading="eager"
             fetchPriority="high"
@@ -161,9 +160,9 @@ const Index = () => {
           <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4">
             ЕСЛИ ВЫ НЕДОВОЛЬНЫ СВОЕЙ ФИГУРОЙ,
           </h2>
-          <h2 className="text-3xl lg:text-5xl font-bold text-white mb-8">
+          <h3 className="text-3xl lg:text-5xl font-bold text-white mb-8">
             НАПИШИТЕ МНЕ!
-          </h2>
+          </h3>
           <p className="text-2xl lg:text-3xl text-white/90 mb-12 font-light">
             Я ЗНАЮ ЧТО ДЕЛАТЬ!
           </p>
