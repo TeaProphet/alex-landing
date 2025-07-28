@@ -6,6 +6,7 @@
   "scripts": {
     "build": "set NODE_OPTIONS=--max-old-space-size=1536 --optimize-for-size && strapi build --minify false",
     "build:prod": "NODE_OPTIONS='--max-old-space-size=1536 --optimize-for-size' strapi build --minify false",
+    "build:low-memory": "node build-low-memory.js",
     "console": "strapi console",
     "deploy": "strapi deploy",
     "dev": "strapi develop",
