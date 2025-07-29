@@ -2,12 +2,21 @@
 
 # Deployment Script for Alexander Paskhalis Fitness Trainer Website
 # Run this after uploading your project files to the server
+# Compatible with: Ubuntu 20.04+, AlmaLinux 8+, Rocky Linux 8+
 
 set -e
 
-PROJECT_DIR="/var/www/fitness-trainer"
+PROJECT_DIR="/var/www/fitness-trainer.online"
+WEB_ROOT="/var/www/fitness-trainer.online"
+BACKEND_DIR="$PROJECT_DIR/backend"
 BACKUP_DIR="/var/backups/fitness-trainer"
 LOG_FILE="/var/log/fitness-trainer/deploy.log"
+
+# Detect OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    echo "🖥️  Operating System: $NAME" | tee -a $LOG_FILE
+fi
 
 echo "🚀 Starting deployment..." | tee -a $LOG_FILE
 

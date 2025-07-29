@@ -4,6 +4,7 @@
 # Alexander Paskhalis Fitness Trainer Website
 # Repository: https://github.com/TeaProphet/alex-landing
 # Domain: fitness-trainer.online
+# Compatible with: Ubuntu 20.04+, AlmaLinux 8+, Rocky Linux 8+
 
 set -e
 
@@ -14,8 +15,11 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
-PROJECT_DIR="/var/www/fitness-trainer"
+# Configuration - Updated for hosting provider's preserved structure
+PROJECT_DIR="/var/www/fitness-trainer.online"
+WEB_ROOT="/var/www/fitness-trainer.online"
+BACKEND_DIR="$PROJECT_DIR/backend"
+FRONTEND_BUILD_DIR="$PROJECT_DIR/frontend/dist"
 REPO_URL="https://github.com/TeaProphet/alex-landing.git"
 DOMAIN="fitness-trainer.online"
 
@@ -51,8 +55,19 @@ check_command() {
     fi
 }
 
+# Detect OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$NAME
+    OS_ID=$ID
+else
+    echo "❌ Cannot detect OS version"
+    exit 1
+fi
+
 echo "🚀 Alexander Paskhalis Fitness Trainer - ONE-CLICK DEPLOYMENT"
 echo "=============================================================="
+echo "Operating System: $OS"
 echo "Repository: $REPO_URL"
 echo "Domain: $DOMAIN"
 echo "Target Directory: $PROJECT_DIR"
@@ -60,19 +75,40 @@ echo ""
 
 # Step 1: System Update
 print_step "Updating system packages"
-sudo apt update && sudo apt upgrade -y
+if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+    # RHEL-based systems (AlmaLinux, Rocky Linux, CentOS, RHEL)
+    sudo dnf update -y
+    # Enable EPEL repository for additional packages
+    sudo dnf install -y epel-release
+else
+    # Debian-based systems (Ubuntu, Debian)
+    sudo apt update && sudo apt upgrade -y
+fi
 print_success "System updated"
 
 # Step 2: Install essential packages
 print_step "Installing essential packages"
-sudo apt install -y curl wget git unzip software-properties-common apt-transport-https ca-certificates gnupg lsb-release htop
+if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+    # RHEL-based systems
+    sudo dnf install -y curl wget git unzip ca-certificates gnupg htop tar gzip
+else
+    # Debian-based systems
+    sudo apt install -y curl wget git unzip software-properties-common apt-transport-https ca-certificates gnupg lsb-release htop
+fi
 print_success "Essential packages installed"
 
 # Step 3: Install Node.js 18
 print_step "Installing Node.js 18"
 if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+    if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+        # RHEL-based systems - use NodeSource repository
+        curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+        sudo dnf install -y nodejs
+    else
+        # Debian-based systems
+        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    fi
 fi
 NODE_VERSION=$(node --version)
 NPM_VERSION=$(npm --version)
@@ -88,17 +124,23 @@ print_success "PM2 installed globally"
 # Step 5: Install and configure Nginx
 print_step "Installing and configuring Nginx"
 if ! command -v nginx &> /dev/null; then
-    sudo apt install -y nginx
+    if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+        sudo dnf install -y nginx
+    else
+        sudo apt install -y nginx
+    fi
 fi
 
 # Start and enable Nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
 
-# Create necessary directories
+# Create necessary directories (using hosting provider's structure)
 sudo mkdir -p /etc/nginx/sites-available
 sudo mkdir -p /etc/nginx/sites-enabled
-sudo mkdir -p /var/www/html/fitness-trainer
+sudo mkdir -p "$WEB_ROOT"
+sudo mkdir -p "$PROJECT_DIR/backend"
+sudo mkdir -p "$PROJECT_DIR/frontend"
 
 # Backup original nginx.conf
 sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup 2>/dev/null || true
@@ -107,31 +149,51 @@ print_success "Nginx installed and started"
 
 # Step 6: Install SSL tools
 print_step "Installing SSL tools (Certbot)"
-sudo apt install -y certbot python3-certbot-nginx
+if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+    sudo dnf install -y certbot python3-certbot-nginx
+else
+    sudo apt install -y certbot python3-certbot-nginx
+fi
 print_success "Certbot installed"
 
 # Step 7: Configure firewall
 print_step "Configuring firewall"
-if command -v ufw &> /dev/null; then
-    sudo ufw allow ssh
-    sudo ufw allow 'Nginx Full'
-    sudo ufw --force enable
-    print_success "UFW firewall configured"
+if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+    # RHEL-based systems use firewalld
+    if ! systemctl is-active --quiet firewalld; then
+        sudo systemctl start firewalld
+        sudo systemctl enable firewalld
+    fi
+    
+    # Configure firewalld rules
+    sudo firewall-cmd --permanent --add-service=ssh
+    sudo firewall-cmd --permanent --add-service=http
+    sudo firewall-cmd --permanent --add-service=https
+    sudo firewall-cmd --reload
+    print_success "Firewalld configured for AlmaLinux"
 else
-    print_warning "UFW not available, installing..."
-    sudo apt install -y ufw
-    if [ $? -eq 0 ]; then
+    # Debian-based systems use UFW
+    if command -v ufw &> /dev/null; then
         sudo ufw allow ssh
-        sudo ufw allow 'Nginx Full' 
+        sudo ufw allow 'Nginx Full'
         sudo ufw --force enable
-        print_success "UFW installed and configured"
+        print_success "UFW firewall configured"
     else
-        print_warning "UFW installation failed, using iptables as fallback"
-        # Basic iptables rules as fallback
-        sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-        sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-        sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
-        print_success "Basic firewall rules applied"
+        print_warning "UFW not available, installing..."
+        sudo apt install -y ufw
+        if [ $? -eq 0 ]; then
+            sudo ufw allow ssh
+            sudo ufw allow 'Nginx Full' 
+            sudo ufw --force enable
+            print_success "UFW installed and configured"
+        else
+            print_warning "UFW installation failed, using iptables as fallback"
+            # Basic iptables rules as fallback
+            sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+            sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+            sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+            print_success "Basic firewall rules applied"
+        fi
     fi
 fi
 
@@ -176,19 +238,38 @@ fi
 # Step 9: Clone and setup application
 print_step "Setting up application from Git repository"
 
-# Create application directory
-sudo mkdir -p /var/www
-
-# Handle existing installation
+# Use hosting provider's preserved directory structure
+# Check if directory exists and handle appropriately
 if [ -d "$PROJECT_DIR" ]; then
-    print_warning "Existing installation found, backing up..."
-    sudo mv "$PROJECT_DIR" "${PROJECT_DIR}-backup-$(date +%Y%m%d_%H%M%S)"
+    print_warning "Using existing directory structure: $PROJECT_DIR"
+    cd "$PROJECT_DIR"
+    
+    # Check if it's already a git repository
+    if [ -d ".git" ]; then
+        print_warning "Git repository found, pulling latest changes..."
+        sudo git pull origin main || sudo git pull origin master
+    else
+        print_warning "Initializing git repository in existing directory..."
+        # Backup any existing files
+        if [ "$(ls -A .)" ]; then
+            sudo mkdir -p "backup-$(date +%Y%m%d_%H%M%S)"
+            sudo mv index.html backup-* 2>/dev/null || true
+        fi
+        
+        # Clone repository content
+        sudo git clone "$REPO_URL" temp-repo
+        sudo mv temp-repo/* temp-repo/.* . 2>/dev/null || true
+        sudo rm -rf temp-repo
+    fi
+else
+    # Create directory and clone if it doesn't exist
+    sudo mkdir -p "$PROJECT_DIR"
+    sudo git clone "$REPO_URL" "$PROJECT_DIR"
+    cd "$PROJECT_DIR"
 fi
 
-# Clone repository
-sudo git clone "$REPO_URL" "$PROJECT_DIR"
+# Set proper ownership
 sudo chown -R $USER:$USER "$PROJECT_DIR"
-cd "$PROJECT_DIR"
 
 # Make scripts executable
 chmod +x deploy/*.sh 2>/dev/null || true
@@ -301,10 +382,20 @@ sudo chmod -R 755 "$PROJECT_DIR"
 sudo chmod -R 775 backend/public/uploads
 sudo chmod -R 775 backend/data
 
-# Copy frontend build to web directory
-sudo rm -rf /var/www/html/fitness-trainer/*
-sudo cp -r frontend/dist/* /var/www/html/fitness-trainer/
-sudo chown -R www-data:www-data /var/www/html/fitness-trainer
+# Copy frontend build to web root (same directory structure)
+print_warning "Copying frontend build to web root: $WEB_ROOT"
+if [ -d "frontend/dist" ]; then
+    # Backup any existing index.html from hosting provider
+    if [ -f "$WEB_ROOT/index.html" ] && [ ! -f "$WEB_ROOT/index.html.backup" ]; then
+        sudo cp "$WEB_ROOT/index.html" "$WEB_ROOT/index.html.backup"
+    fi
+    
+    # Copy build files to web root
+    sudo cp -r frontend/dist/* "$WEB_ROOT/"
+    sudo chown -R www-data:www-data "$WEB_ROOT"
+else
+    print_warning "Frontend build directory not found, skipping frontend deployment"
+fi
 
 print_success "Application built and configured"
 
@@ -378,8 +469,8 @@ server {
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
     
-    # Root directory for frontend
-    root /var/www/html/fitness-trainer;
+    # Root directory for frontend (using hosting provider's structure)
+    root $WEB_ROOT;
     index index.html;
     
     # Frontend - Serve React SPA
@@ -421,7 +512,7 @@ server {
     
     # Serve uploaded images
     location /uploads/ {
-        alias $PROJECT_DIR/backend/public/uploads/;
+        alias $BACKEND_DIR/public/uploads/;
         expires 30d;
         add_header Cache-Control "public, no-transform";
     }

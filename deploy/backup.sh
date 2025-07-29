@@ -1,13 +1,22 @@
 #!/bin/bash
 
 # Backup Script for Alexander Paskhalis Fitness Trainer Website
+# Compatible with: Ubuntu 20.04+, AlmaLinux 8+, Rocky Linux 8+
 
 set -e
 
-PROJECT_DIR="/var/www/fitness-trainer"
+PROJECT_DIR="/var/www/fitness-trainer.online"
+WEB_ROOT="/var/www/fitness-trainer.online"
+BACKEND_DIR="$PROJECT_DIR/backend"
 BACKUP_BASE_DIR="/var/backups/fitness-trainer"
 BACKUP_DIR="$BACKUP_BASE_DIR/$(date +%Y%m%d_%H%M%S)"
 RETENTION_DAYS=30
+
+# Detect OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    echo "🖥️  Operating System: $NAME"
+fi
 
 echo "💾 Starting backup process..."
 

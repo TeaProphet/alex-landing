@@ -1,13 +1,21 @@
 #!/bin/bash
 
 # SSL Setup Script for fitness-trainer.online using Let's Encrypt
+# Compatible with: Ubuntu 20.04+, AlmaLinux 8+, Rocky Linux 8+
 
 set -e
 
 DOMAIN="fitness-trainer.online"
 EMAIL="your-email@example.com"  # Change this to your email
 
+# Detect OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS_ID=$ID
+fi
+
 echo "🔒 Setting up SSL certificate for $DOMAIN..."
+echo "Operating System: $NAME"
 
 # Check if domain is pointing to this server
 echo "🔍 Checking if domain points to this server..."
@@ -51,8 +59,15 @@ if [ $? -eq 0 ]; then
     # Update Nginx configuration for HTTPS
     echo "🔧 Updating Nginx configuration for HTTPS..."
     
-    # Backup original config
-    sudo cp /etc/nginx/sites-available/fitness-trainer.online /etc/nginx/sites-available/fitness-trainer.online.bak
+    # Backup original config (handle different nginx config paths)
+    if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+        # RHEL-based systems store configs in /etc/nginx/conf.d/
+        sudo cp /etc/nginx/conf.d/fitness-trainer.online.conf /etc/nginx/conf.d/fitness-trainer.online.conf.bak 2>/dev/null || \
+        sudo cp /etc/nginx/sites-available/fitness-trainer.online /etc/nginx/sites-available/fitness-trainer.online.bak 2>/dev/null || true
+    else
+        # Debian-based systems use sites-available
+        sudo cp /etc/nginx/sites-available/fitness-trainer.online /etc/nginx/sites-available/fitness-trainer.online.bak
+    fi
     
     # Create HTTPS-enabled Nginx config
     cat > /tmp/nginx-ssl.conf << 'EOL'
@@ -95,8 +110,8 @@ server {
     limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
     limit_req_zone $binary_remote_addr zone=static:10m rate=30r/s;
     
-    # Root directory for frontend
-    root /var/www/html/fitness-trainer;
+    # Root directory for frontend (using hosting provider's structure)
+    root /var/www/fitness-trainer.online;
     index index.html;
     
     # Gzip compression
@@ -159,7 +174,7 @@ server {
     
     # Serve uploaded images from Strapi
     location /uploads/ {
-        alias /var/www/fitness-trainer/backend/public/uploads/;
+        alias /var/www/fitness-trainer.online/backend/public/uploads/;
         expires 30d;
         add_header Cache-Control "public, no-transform";
         
@@ -174,7 +189,7 @@ server {
     
     # Favicon and manifest
     location ~* ^/(favicon\.ico|apple-touch-icon\.png|icon-.*\.png|manifest\.json|robots\.txt|sitemap\.xml)$ {
-        root /var/www/html/fitness-trainer;
+        root /var/www/fitness-trainer.online;
         expires 30d;
         add_header Cache-Control "public";
     }
@@ -202,8 +217,18 @@ server {
 }
 EOL
     
-    # Replace Nginx config with SSL version
-    sudo mv /tmp/nginx-ssl.conf /etc/nginx/sites-available/fitness-trainer.online
+    # Replace Nginx config with SSL version (handle different paths)
+    if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+        # RHEL-based systems - try both locations
+        if [ -f /etc/nginx/conf.d/fitness-trainer.online.conf ]; then
+            sudo mv /tmp/nginx-ssl.conf /etc/nginx/conf.d/fitness-trainer.online.conf
+        else
+            sudo mv /tmp/nginx-ssl.conf /etc/nginx/sites-available/fitness-trainer.online
+        fi
+    else
+        # Debian-based systems
+        sudo mv /tmp/nginx-ssl.conf /etc/nginx/sites-available/fitness-trainer.online
+    fi
     
     # Test configuration
     echo "🧪 Testing Nginx configuration..."
@@ -229,7 +254,16 @@ EOL
     else
         echo "❌ Nginx configuration test failed"
         echo "Restoring backup..."
-        sudo mv /etc/nginx/sites-available/fitness-trainer.online.bak /etc/nginx/sites-available/fitness-trainer.online
+        if [[ "$OS_ID" == "almalinux" ]] || [[ "$OS_ID" == "rocky" ]] || [[ "$OS_ID" == "rhel" ]] || [[ "$OS_ID" == "centos" ]]; then
+            # RHEL-based systems - restore from appropriate location
+            if [ -f /etc/nginx/conf.d/fitness-trainer.online.conf.bak ]; then
+                sudo mv /etc/nginx/conf.d/fitness-trainer.online.conf.bak /etc/nginx/conf.d/fitness-trainer.online.conf
+            else
+                sudo mv /etc/nginx/sites-available/fitness-trainer.online.bak /etc/nginx/sites-available/fitness-trainer.online 2>/dev/null || true
+            fi
+        else
+            sudo mv /etc/nginx/sites-available/fitness-trainer.online.bak /etc/nginx/sites-available/fitness-trainer.online
+        fi
         sudo systemctl start nginx
         exit 1
     fi

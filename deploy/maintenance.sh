@@ -1,8 +1,11 @@
 #!/bin/bash
 
 # Maintenance Script for Alexander Paskhalis Fitness Trainer Website
+# Compatible with: Ubuntu 20.04+, AlmaLinux 8+, Rocky Linux 8+
 
-PROJECT_DIR="/var/www/fitness-trainer"
+PROJECT_DIR="/var/www/fitness-trainer.online"
+WEB_ROOT="/var/www/fitness-trainer.online"
+BACKEND_DIR="$PROJECT_DIR/backend"
 LOG_DIR="/var/log/fitness-trainer"
 
 show_help() {
@@ -27,6 +30,13 @@ show_status() {
     echo "===================="
     echo ""
     
+    # Detect OS
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        echo "🖥️  Operating System: $NAME"
+        echo ""
+    fi
+    
     echo "🔄 PM2 Status:"
     pm2 status
     echo ""
@@ -45,6 +55,18 @@ show_status() {
     
     echo "🌡️  System Load:"
     uptime
+    
+    # Check firewall status based on OS
+    if [[ "$ID" == "almalinux" ]] || [[ "$ID" == "rocky" ]] || [[ "$ID" == "rhel" ]] || [[ "$ID" == "centos" ]]; then
+        echo ""
+        echo "🔥 Firewall Status (firewalld):"
+        sudo firewall-cmd --state 2>/dev/null || echo "Firewalld not running"
+        sudo firewall-cmd --list-services 2>/dev/null || true
+    else
+        echo ""
+        echo "🔥 Firewall Status (UFW):"
+        sudo ufw status 2>/dev/null || echo "UFW not available"
+    fi
 }
 
 restart_app() {

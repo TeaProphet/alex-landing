@@ -2,7 +2,7 @@
 
 ## 📋 Prerequisites
 
-- **VPS Server**: Ubuntu 20.04/22.04 with root access
+- **VPS Server**: Ubuntu 20.04+, AlmaLinux 8+, Rocky Linux 8+, or RHEL 8+ with root access
 - **Domain**: `fitness-trainer.online` pointed to your server IP
 - **Server Specs**: Minimum 1GB RAM, 20GB storage
 - **Email**: For SSL certificate registration
@@ -17,9 +17,9 @@ scp -r alex-landing/ user@your-server-ip:/tmp/
 # SSH into server
 ssh user@your-server-ip
 
-# Move project to web directory
-sudo mv /tmp/alex-landing /var/www/fitness-trainer
-cd /var/www/fitness-trainer
+# Move project to hosting provider's preserved directory
+sudo mv /tmp/alex-landing/* /var/www/fitness-trainer.online/
+cd /var/www/fitness-trainer.online
 
 # Make scripts executable
 chmod +x deploy/*.sh
@@ -158,6 +158,7 @@ pm2 monit
 ## 📊 Monitoring & Logs
 
 ### Log Locations
+- **Project Directory**: `/var/www/fitness-trainer.online/`
 - **Application Logs**: `/var/log/fitness-trainer/`
 - **Nginx Logs**: `/var/log/nginx/fitness-trainer-*.log`
 - **PM2 Logs**: `~/.pm2/logs/`
