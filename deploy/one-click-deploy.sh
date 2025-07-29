@@ -21,7 +21,7 @@ DOMAIN="fitness-trainer.online"
 
 # Progress tracking
 STEP=0
-TOTAL_STEPS=12
+TOTAL_STEPS=13
 
 print_step() {
     STEP=$((STEP + 1))
@@ -135,7 +135,45 @@ else
     fi
 fi
 
-# Step 8: Clone and setup application
+# Step 8: Setup swap for low-memory VPS
+print_step "Setting up swap memory for build process"
+
+# Check available memory
+TOTAL_MEM=$(free -m | awk 'NR==2{printf "%.0f", $2}')
+print_warning "Detected ${TOTAL_MEM}MB RAM"
+
+if [ "$TOTAL_MEM" -lt 4096 ]; then
+    print_warning "Low memory detected, setting up swap..."
+    
+    # Check if swap already exists
+    if ! swapon --show | grep -q "/swapfile"; then
+        print_warning "Creating 2GB swap file for memory-intensive builds..."
+        
+        # Create 2GB swap file
+        sudo fallocate -l 2G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        
+        # Make it permanent
+        echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+        
+        # Set swappiness to 10 (use swap only when necessary)
+        echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+        
+        print_success "2GB swap file created and enabled"
+    else
+        print_success "Swap already configured"
+    fi
+    
+    # Show total memory after swap
+    TOTAL_WITH_SWAP=$(free -m | awk 'NR==2{printf "%.0f", $2+$NF}')
+    print_success "Total memory available: ${TOTAL_WITH_SWAP}MB (including swap)"
+else
+    print_success "Sufficient memory detected, skipping swap setup"
+fi
+
+# Step 9: Clone and setup application
 print_step "Setting up application from Git repository"
 
 # Create application directory
@@ -157,7 +195,7 @@ chmod +x deploy/*.sh 2>/dev/null || true
 
 print_success "Application repository cloned"
 
-# Step 9: Install application dependencies and build
+# Step 10: Install application dependencies and build
 print_step "Installing dependencies and building application"
 
 # Create environment files
@@ -179,6 +217,10 @@ JWT_SECRET=$(openssl rand -base64 32)
 
 # File Upload
 UPLOAD_DIR=./public/uploads
+
+# Enable admin panel in production
+STRAPI_DISABLE_REMOTE_DATA_TRANSFER=false
+STRAPI_ADMIN_PANEL_ENABLED=true
 EOL
 
 # Frontend environment
@@ -193,13 +235,60 @@ npm install || true
 # Install and build backend
 cd backend
 npm install --production
-npm run build
+
+# Use low-memory build for VPS with limited RAM
+if [ "$TOTAL_MEM" -lt 4096 ]; then
+    print_warning "Using low-memory build process for ${TOTAL_MEM}MB RAM VPS..."
+    npm run build:low-memory
+    print_success "Low-memory build completed successfully"
+else
+    print_warning "Using standard build process..."
+    npm run build
+    print_success "Standard build completed"
+fi
 cd ..
 
 # Install and build frontend
 cd frontend
+
+# Generate api.ts from template if it doesn't exist
+if [ ! -f "src/lib/api.ts" ]; then
+    print_warning "Generating api.ts from template..."
+    if [ -f "src/lib/api.ts.template" ]; then
+        # Generate a secure API token for production
+        STRAPI_TOKEN=$(openssl rand -hex 64)
+        sed "s/YOUR_STRAPI_TOKEN_HERE/$STRAPI_TOKEN/" src/lib/api.ts.template > src/lib/api.ts
+        print_success "api.ts generated with secure token"
+    else
+        print_error "api.ts.template not found, creating basic config..."
+        cat > src/lib/api.ts << EOL
+export const API_CONFIG = {
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:1337/api',
+  token: import.meta.env.VITE_STRAPI_TOKEN || '$(openssl rand -hex 64)'
+};
+
+export const apiHeaders = {
+  'Authorization': \`Bearer \${API_CONFIG.token}\`,
+  'Content-Type': 'application/json',
+};
+EOL
+        print_success "Basic api.ts created"
+    fi
+else
+    print_success "api.ts already exists"
+fi
+
 npm install
-npm run build
+
+# Use memory-optimized build for frontend too on low-memory VPS
+if [ "$TOTAL_MEM" -lt 4096 ]; then
+    print_warning "Using memory-optimized frontend build..."
+    NODE_OPTIONS="--max-old-space-size=1024" npm run build
+    print_success "Memory-optimized frontend build completed"
+else
+    npm run build
+    print_success "Frontend build completed"
+fi
 cd ..
 
 # Create necessary directories
@@ -219,7 +308,7 @@ sudo chown -R www-data:www-data /var/www/html/fitness-trainer
 
 print_success "Application built and configured"
 
-# Step 10: Configure Nginx for the site
+# Step 11: Configure Nginx for the site
 print_step "Configuring Nginx for $DOMAIN"
 
 # Create main nginx.conf with sites-enabled support
@@ -373,7 +462,7 @@ sudo systemctl reload nginx
 
 print_success "Nginx configured for $DOMAIN"
 
-# Step 11: Start application with PM2
+# Step 12: Start application with PM2
 print_step "Starting application with PM2"
 
 # Stop existing processes
@@ -382,7 +471,7 @@ pm2 delete alex-backend 2>/dev/null || true
 
 # Start backend
 cd backend
-pm2 start dist/index.js --name "alex-backend" --env production
+pm2 start npm --name "alex-backend" -- start
 pm2 save
 
 # Setup PM2 startup
@@ -390,7 +479,7 @@ sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -
 
 print_success "Application started with PM2"
 
-# Step 12: Final status and instructions
+# Step 13: Final status and instructions
 print_step "Deployment completed - Final status"
 
 echo ""
@@ -407,6 +496,11 @@ echo "  • NPM: $(npm --version)"
 echo "  • PM2: $(pm2 --version)"
 echo "  • Nginx: $(nginx -v 2>&1 | cut -d' ' -f3)"
 echo "  • Server IP: $SERVER_IP"
+echo "  • RAM: ${TOTAL_MEM}MB"
+if [ "$TOTAL_MEM" -lt 4096 ]; then
+    SWAP_SIZE=$(free -m | awk '/^Swap:/ {print $2}')
+    echo "  • Swap: ${SWAP_SIZE}MB (for low-memory optimization)"
+fi
 echo ""
 
 echo "🌐 Your website is accessible at:"
