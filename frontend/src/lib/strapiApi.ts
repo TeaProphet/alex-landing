@@ -20,15 +20,19 @@ export interface ContactsData {
   locale: string;
 }
 
+export interface MediaItem {
+  url: string;
+  alternativeText?: string;
+  mime?: string;
+  name?: string;
+}
+
 export interface ServiceBlockData {
   id: number;
   documentId: string;
   title: string;
   text: string;
-  photos: Array<{
-    url: string;
-    alternativeText?: string;
-  }>;
+  photos: MediaItem[];
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
@@ -77,4 +81,21 @@ export function getImageUrl(imageUrl: string): string {
   }
   const baseUrl = import.meta.env.VITE_STRAPI_URL || 'http://localhost:1337';
   return `${baseUrl}${imageUrl}`;
+}
+
+export function getMediaUrl(mediaUrl: string): string {
+  return getImageUrl(mediaUrl); // Same logic for all media
+}
+
+export function isVideoMimeType(mimeType?: string): boolean {
+  if (!mimeType) return false;
+  return mimeType.startsWith('video/');
+}
+
+export function convertPhotosToMedia(photos: MediaItem[]): Array<{url: string; type: 'image' | 'video'; alternativeText?: string}> {
+  return photos.map(photo => ({
+    url: getMediaUrl(photo.url),
+    type: isVideoMimeType(photo.mime) ? 'video' : 'image',
+    alternativeText: photo.alternativeText
+  }));
 }

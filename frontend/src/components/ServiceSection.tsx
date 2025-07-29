@@ -1,11 +1,12 @@
 import { ServiceCarousel } from './ServiceCarousel';
+import type { MediaItem as CarouselMediaItem } from './ServiceCarousel';
 import { Button } from './ui/button';
 import { useState, useRef, useEffect } from 'react';
 
 interface ServiceSectionProps {
   title: string;
   description: string;
-  images: string[];
+  media: CarouselMediaItem[] | string[]; // Support both formats for backward compatibility
   imageLeft?: boolean;
   onContactClick: () => void;
 }
@@ -13,10 +14,14 @@ interface ServiceSectionProps {
 export const ServiceSection = ({ 
   title, 
   description, 
-  images, 
+  media, 
   imageLeft = false,
   onContactClick 
 }: ServiceSectionProps) => {
+  // Convert legacy images array to media format if needed
+  const mediaItems: CarouselMediaItem[] = Array.isArray(media) && typeof media[0] === 'string'
+    ? (media as string[]).map(url => ({ url, type: 'image' as const }))
+    : media as CarouselMediaItem[];
   const [textSectionHeight, setTextSectionHeight] = useState(0);
   const textRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +59,7 @@ export const ServiceSection = ({
         
         {/* Image Section - Mobile */}
         <div className="w-full">
-          <ServiceCarousel images={images} textSectionHeight={0} />
+          <ServiceCarousel media={mediaItems} textSectionHeight={0} />
         </div>
       </div>
 
@@ -62,7 +67,7 @@ export const ServiceSection = ({
       <div className={`hidden md:flex ${imageLeft ? 'flex-row-reverse' : ''}`}>
         {/* Image Section - Desktop 50% */}
         <div className="w-1/2">
-          <ServiceCarousel images={images} textSectionHeight={textSectionHeight} />
+          <ServiceCarousel media={mediaItems} textSectionHeight={textSectionHeight} />
         </div>
         
         {/* Text Section - Desktop 50% */}

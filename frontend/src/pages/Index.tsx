@@ -3,7 +3,7 @@ import { ServiceSection } from '@/components/ServiceSection';
 import { StructuredData } from '@/components/StructuredData';
 import { Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchContacts, fetchServicesBlocks, getImageUrl, type ContactsData, type ServiceBlockData } from '@/lib/strapiApi';
+import { fetchContacts, fetchServicesBlocks, getImageUrl, convertPhotosToMedia, type ContactsData, type ServiceBlockData } from '@/lib/strapiApi';
 import { useState, useEffect } from 'react';
 
 const Index = () => {
@@ -146,7 +146,7 @@ const Index = () => {
               <ServiceSection
                 title={service.title}
                 description={service.text}
-                images={service.photos.map(photo => getImageUrl(photo.url))}
+                media={convertPhotosToMedia(service.photos)}
                 imageLeft={index % 2 !== 0}
                 onContactClick={scrollToContacts}
               />
