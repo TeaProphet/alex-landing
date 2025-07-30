@@ -41,7 +41,7 @@ export async function fetchContacts(): Promise<ContactsData> {
 
 export async function fetchServicesBlocks(): Promise<ServiceBlockData[]> {
   try {
-    const response = await fetch(`${API_CONFIG.baseURL}/items/services_blocks?sort=sort`, {
+    const response = await fetch(`${API_CONFIG.baseURL}/items/services_blocks`, {
       headers: apiHeaders,
     });
 
