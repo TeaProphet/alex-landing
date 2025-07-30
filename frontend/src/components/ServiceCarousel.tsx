@@ -19,44 +19,80 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
   const [containerHeight, setContainerHeight] = useState(400);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
   const nextMedia = () => {
+    if (isTransitioning || media.length <= 1) return;
+    setIsTransitioning(true);
     setCurrentIndex((prev) => (prev + 1) % media.length);
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const prevMedia = () => {
+    if (isTransitioning || media.length <= 1) return;
+    setIsTransitioning(true);
     setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(0); // Reset touchEnd
+    if (isTransitioning || media.length <= 1) return;
+    setTouchEnd(0);
     setTouchStart(e.targetTouches[0].clientX);
+    setIsDragging(true);
+    setDragOffset(0);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    if (!isDragging || !touchStart || isTransitioning || media.length <= 1) return;
+    
+    const currentX = e.targetTouches[0].clientX;
+    const diff = currentX - touchStart;
+    
+    // Limit drag distance to container width
+    const containerWidth = e.currentTarget.offsetWidth;
+    const maxDrag = containerWidth * 0.8; // Allow dragging up to 80% of container width
+    const clampedDiff = Math.max(-maxDrag, Math.min(maxDrag, diff));
+    
+    setDragOffset(clampedDiff);
+    setTouchEnd(currentX);
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!isDragging || !touchStart || isTransitioning || media.length <= 1) return;
+    
+    setIsDragging(false);
+    
+    if (!touchEnd) {
+      setDragOffset(0);
+      return;
+    }
     
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe && media.length > 1) {
+    if (isLeftSwipe) {
       nextMedia();
-    }
-    if (isRightSwipe && media.length > 1) {
+    } else if (isRightSwipe) {
       prevMedia();
     }
+    
+    // Reset drag offset with animation
+    setDragOffset(0);
   };
 
+  // Helper functions to get adjacent media items
+  const getPrevIndex = () => (currentIndex - 1 + media.length) % media.length;
+  const getNextIndex = () => (currentIndex + 1) % media.length;
+
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (media.length <= 1) return;
+    if (media.length <= 1 || isTransitioning) return;
     
     switch (e.key) {
       case 'ArrowLeft':
@@ -145,6 +181,38 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     setContainerHeight(finalHeight);
   }, [media, imageDimensionsCache, textSectionHeight]);
 
+  // Render media item component
+  const renderMediaItem = (mediaItem: MediaItem, index: number, className: string = '') => {
+    if (mediaItem.type === 'video') {
+      return (
+        <video 
+          key={`video-${index}`}
+          src={mediaItem.url}
+          className={`w-full h-full object-cover ${className}`}
+          controls
+          preload="metadata"
+          playsInline
+          muted
+          onError={(e) => {
+            console.error('Video loading error:', e, 'URL:', mediaItem.url);
+          }}
+          aria-label={mediaItem.alternativeText || `Видео услуги ${index + 1} - персональные тренировки и консультации с фитнес тренером`}
+        />
+      );
+    }
+    
+    return (
+      <img 
+        key={`image-${index}`}
+        src={mediaItem.url} 
+        alt={mediaItem.alternativeText || `Фото услуги ${index + 1} - персональные тренировки и консультации с фитнес тренером`}
+        className={`w-full h-full object-cover ${className}`}
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  };
+
   return (
     <div 
       className={`relative w-full overflow-hidden ${className} touch-pan-y focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
@@ -158,37 +226,46 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
       onTouchEnd={onTouchEnd}
       onKeyDown={onKeyDown}
     >
-      {media[currentIndex]?.type === 'video' ? (
-        <video 
-          src={media[currentIndex].url}
-          className="w-full h-full object-cover transition-all duration-500"
-          controls
-          preload="metadata"
-          playsInline
-          muted
-          onError={(e) => {
-            console.error('Video loading error:', e, 'URL:', media[currentIndex].url);
-          }}
-          onLoadStart={() => {
-            console.log('Video loading started:', media[currentIndex].url);
-          }}
-          aria-label={media[currentIndex].alternativeText || `Видео услуги ${currentIndex + 1} - персональные тренировки и консультации с фитнес тренером`}
-        />
-      ) : (
-        <img 
-          src={media[currentIndex]?.url} 
-          alt={media[currentIndex]?.alternativeText || `Фото услуги ${currentIndex + 1} - персональные тренировки и консультации с фитнес тренером`}
-          className="w-full h-full object-cover transition-all duration-500"
-          loading="lazy"
-          decoding="async"
-        />
-      )}
+      {/* Carousel container with smooth transitions */}
+      <div 
+        className="relative w-full h-full flex"
+        style={{
+          transform: `translateX(${isDragging ? dragOffset : 0}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+      >
+        {/* Previous image (shown when dragging right) */}
+        {media.length > 1 && (
+          <div 
+            className="absolute left-0 top-0 w-full h-full"
+            style={{ transform: 'translateX(-100%)' }}
+          >
+            {renderMediaItem(media[getPrevIndex()], getPrevIndex())}
+          </div>
+        )}
+        
+        {/* Current image */}
+        <div className="relative w-full h-full flex-shrink-0">
+          {renderMediaItem(media[currentIndex], currentIndex)}
+        </div>
+        
+        {/* Next image (shown when dragging left) */}
+        {media.length > 1 && (
+          <div 
+            className="absolute right-0 top-0 w-full h-full"
+            style={{ transform: 'translateX(100%)' }}
+          >
+            {renderMediaItem(media[getNextIndex()], getNextIndex())}
+          </div>
+        )}
+      </div>
       
       {media.length > 1 && (
         <>
           <button
             onClick={prevMedia}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            disabled={isTransitioning}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-full transition-smooth z-20 min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={`Предыдущее изображение (${currentIndex === 0 ? media.length : currentIndex} из ${media.length})`}
             title="Предыдущее изображение"
           >
@@ -196,7 +273,8 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
           </button>
           <button
             onClick={nextMedia}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            disabled={isTransitioning}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-full transition-smooth z-20 min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={`Следующее изображение (${currentIndex + 2 > media.length ? 1 : currentIndex + 2} из ${media.length})`}
             title="Следующее изображение"
           >
@@ -207,7 +285,14 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
             {media.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => {
+                  if (!isTransitioning) {
+                    setIsTransitioning(true);
+                    setCurrentIndex(index);
+                    setTimeout(() => setIsTransitioning(false), 300);
+                  }
+                }}
+                disabled={isTransitioning}
                 className={`p-3 min-w-[44px] min-h-[44px] flex items-center justify-center transition-smooth`}
                 role="tab"
                 aria-selected={index === currentIndex}
