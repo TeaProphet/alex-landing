@@ -158,11 +158,14 @@ const Index = () => {
         <section className="py-16 bg-background" aria-labelledby="intro-heading">
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="text-center">
-              <p id="intro-heading" className="text-lg lg:text-xl leading-relaxed text-muted-foreground">
-                {contactsData?.greeting || 
-                  "Привет! Меня зовут Александр, я персональный фитнес тренер. Создатель божественных фигур. Гуру в сфере тренинга и нутрициологии. Приведу Вас к любой цели, от \"просто похудеть\" - до выхода на соревнования! Со мной ваша забота о себе под профессиональным контролем круглосуточно!"
-                }
-              </p>
+              <div 
+                id="intro-heading" 
+                className="text-lg lg:text-xl leading-relaxed text-muted-foreground"
+                dangerouslySetInnerHTML={{
+                  __html: contactsData?.greeting || 
+                    "Привет! Меня зовут Александр, я персональный фитнес тренер. Создатель божественных фигур. Гуру в сфере тренинга и нутрициологии. Приведу Вас к любой цели, от \"просто похудеть\" - до выхода на соревнования! Со мной ваша забота о себе под профессиональным контролем круглосуточно!"
+                }}
+              />
             </div>
           </div>
         </section>
