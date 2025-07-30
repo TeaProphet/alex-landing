@@ -25,7 +25,8 @@
       "Bash(timeout 10 docker-compose logs directus)",
       "Bash(curl:*)",
       "Bash(./fix-services-media.sh:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "WebFetch(domain:directus.io)"
     ],
     "deny": []
   }

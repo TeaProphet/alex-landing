@@ -43,8 +43,9 @@ sleep 10
 # Update frontend
 log "🏗️ Rebuilding frontend..."
 cd "$PROJECT_DIR/frontend"
-npm ci --only=production
+npm ci
 npm run build
+npm prune --production
 
 # Restart Nginx to clear any caches
 log "🌐 Restarting Nginx..."
