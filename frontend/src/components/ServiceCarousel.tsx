@@ -97,6 +97,9 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     <div 
       className={`relative w-full overflow-hidden ${className}`}
       style={{ height: `${containerHeight}px` }}
+      role="region"
+      aria-label={`Галерея изображений и видео услуг, ${currentIndex + 1} из ${media.length}`}
+      aria-live="polite"
     >
       {media[currentIndex]?.type === 'video' ? (
         <video 
@@ -128,29 +131,37 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
         <>
           <button
             onClick={prevMedia}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-smooth z-10"
-            aria-label="Предыдущее медиа"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label={`Предыдущее изображение (${currentIndex === 0 ? media.length : currentIndex} из ${media.length})`}
+            title="Предыдущее изображение"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={20} aria-hidden="true" />
           </button>
           <button
             onClick={nextMedia}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-smooth z-10"
-            aria-label="Следующее медиа"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label={`Следующее изображение (${currentIndex + 2 > media.length ? 1 : currentIndex + 2} из ${media.length})`}
+            title="Следующее изображение"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} aria-hidden="true" />
           </button>
           
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10" role="tablist" aria-label="Индикаторы слайдов">
             {media.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-smooth ${
+                className={`p-3 min-w-[44px] min-h-[44px] flex items-center justify-center transition-smooth`}
+                role="tab"
+                aria-selected={index === currentIndex}
+                aria-controls={`slide-${index}`}
+                aria-label={`Перейти к изображению ${index + 1} из ${media.length}`}
+                title={`Показать изображение ${index + 1}`}
+              >
+                <div className={`w-2.5 h-2.5 rounded-full transition-smooth ${
                   index === currentIndex ? 'bg-white shadow-lg' : 'bg-white/60 hover:bg-white/80'
-                }`}
-                aria-label={`Перейти к медиа ${index + 1}`}
-              />
+                }`} />
+              </button>
             ))}
           </div>
         </>

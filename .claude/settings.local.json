@@ -26,7 +26,8 @@
       "Bash(curl:*)",
       "Bash(./fix-services-media.sh:*)",
       "Bash(npm run lint:*)",
-      "WebFetch(domain:directus.io)"
+      "WebFetch(domain:directus.io)",
+      "WebFetch(domain:dequeuniversity.com)"
     ],
     "deny": []
   }

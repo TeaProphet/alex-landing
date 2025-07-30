@@ -150,8 +150,30 @@ const Index = () => {
             Ваш персональный фитнес тренер
           </h2>
           <div className="text-lg lg:text-xl space-y-2">
-            {contactsData?.email_address && <p>{contactsData.email_address}</p>}
-            {contactsData?.phone_number && <p>{contactsData.phone_number}</p>}
+            {contactsData?.email_address && (
+              <p>
+                <a 
+                  href={`mailto:${contactsData.email_address}`}
+                  className="hover:text-primary transition-colors underline decoration-1 underline-offset-2"
+                  aria-label={`Написать email на адрес ${contactsData.email_address}`}
+                  title="Отправить email"
+                >
+                  {contactsData.email_address}
+                </a>
+              </p>
+            )}
+            {contactsData?.phone_number && (
+              <p>
+                <a 
+                  href={`tel:${contactsData.phone_number}`}
+                  className="hover:text-primary transition-colors underline decoration-1 underline-offset-2"
+                  aria-label={`Позвонить по номеру ${contactsData.phone_number}`}
+                  title="Позвонить"
+                >
+                  {contactsData.phone_number}
+                </a>
+              </p>
+            )}
           </div>
         </div>
         
@@ -292,8 +314,30 @@ const Index = () => {
           </div>
           
           <div className="text-white/80 space-y-2">
-            {contactsData?.email_address && <p>{contactsData.email_address}</p>}
-            {contactsData?.phone_number && <p>{contactsData.phone_number}</p>}
+            {contactsData?.email_address && (
+              <p>
+                <a 
+                  href={`mailto:${contactsData.email_address}`}
+                  className="hover:text-white transition-colors underline decoration-1 underline-offset-2"
+                  aria-label={`Написать email на адрес ${contactsData.email_address}`}
+                  title="Отправить email"
+                >
+                  {contactsData.email_address}
+                </a>
+              </p>
+            )}
+            {contactsData?.phone_number && (
+              <p>
+                <a 
+                  href={`tel:${contactsData.phone_number}`}
+                  className="hover:text-white transition-colors underline decoration-1 underline-offset-2"
+                  aria-label={`Позвонить по номеру ${contactsData.phone_number}`}
+                  title="Позвонить"
+                >
+                  {contactsData.phone_number}
+                </a>
+              </p>
+            )}
           </div>
         </div>
         </footer>
