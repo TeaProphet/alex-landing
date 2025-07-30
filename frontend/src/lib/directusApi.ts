@@ -61,7 +61,7 @@ export function getImageUrl(fileId: string): string {
   if (fileId.startsWith('http')) {
     return fileId;
   }
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+  const baseUrl = import.meta.env.VITE_API_URL || 'https://fitness-trainer.online';
   return `${baseUrl}/assets/${fileId}`;
 }
 
