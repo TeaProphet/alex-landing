@@ -19,4 +19,7 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    assetsDir: 'app-assets', // или любое другое имя
+  }
 }));
