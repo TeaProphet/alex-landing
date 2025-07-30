@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface MediaItem {
@@ -26,6 +26,9 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
   };
 
+  // Memoize the media URLs to prevent recalculation when only textSectionHeight changes
+  const mediaUrls = useMemo(() => media.map(m => m.url).join(','), [media]);
+
   useEffect(() => {
     const calculateHeight = async () => {
       if (media.length === 0) return;
@@ -41,18 +44,10 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
             const calculatedHeight = viewportWidth / (16/9);
             mediaHeights.push(calculatedHeight);
           } else {
-            // For images, calculate based on actual dimensions
-            const height = await new Promise<number>((resolve) => {
-              const img = new Image();
-              img.onload = () => {
-                const aspectRatio = img.width / img.height;
-                const calculatedHeight = viewportWidth / aspectRatio;
-                resolve(calculatedHeight);
-              };
-              img.onerror = () => resolve(viewportWidth / 1.5); // fallback height
-              img.src = mediaItem.url;
-            });
-            mediaHeights.push(height);
+            // For images, use default aspect ratio instead of loading them
+            // This prevents unnecessary image requests during scroll
+            const calculatedHeight = viewportWidth / 1.5; // Default 3:2 aspect ratio
+            mediaHeights.push(calculatedHeight);
           }
         } catch {
           mediaHeights.push(viewportWidth / 1.5); // fallback height
@@ -72,7 +67,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     };
 
     calculateHeight();
-  }, [media, textSectionHeight]);
+  }, [mediaUrls, textSectionHeight]);
 
   return (
     <div 
@@ -87,6 +82,12 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
           preload="metadata"
           playsInline
           muted
+          onError={(e) => {
+            console.error('Video loading error:', e, 'URL:', media[currentIndex].url);
+          }}
+          onLoadStart={() => {
+            console.log('Video loading started:', media[currentIndex].url);
+          }}
           aria-label={media[currentIndex].alternativeText || `Видео услуги ${currentIndex + 1} - персональные тренировки и консультации с фитнес тренером`}
         />
       ) : (
