@@ -94,8 +94,8 @@ export async function resolveMediaIds(junctionIds: number[]): Promise<FileMetada
 
     const junctionResult = await junctionResponse.json();
     const fileIds = junctionResult.data
-      .filter((item: any) => item.directus_files_id)
-      .map((item: any) => item.directus_files_id);
+      .filter((item: unknown) => item && typeof item === 'object' && 'directus_files_id' in item)
+      .map((item: { directus_files_id: string }) => item.directus_files_id);
 
     // Get file metadata for each file to determine type
     const fileMetadata = await Promise.all(

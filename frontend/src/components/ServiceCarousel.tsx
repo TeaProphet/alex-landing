@@ -17,6 +17,11 @@ interface ServiceCarouselProps {
 export const ServiceCarousel = ({ media, className = '', textSectionHeight }: ServiceCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [containerHeight, setContainerHeight] = useState(400);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
 
   const nextMedia = () => {
     setCurrentIndex((prev) => (prev + 1) % media.length);
@@ -24,6 +29,53 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
 
   const prevMedia = () => {
     setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0); // Reset touchEnd
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && media.length > 1) {
+      nextMedia();
+    }
+    if (isRightSwipe && media.length > 1) {
+      prevMedia();
+    }
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (media.length <= 1) return;
+    
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        prevMedia();
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        nextMedia();
+        break;
+      case 'Home':
+        e.preventDefault();
+        setCurrentIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setCurrentIndex(media.length - 1);
+        break;
+    }
   };
 
   // Memoize the media URLs to prevent recalculation when only textSectionHeight changes
@@ -71,7 +123,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     };
 
     loadImageDimensions();
-  }, [mediaUrls]); // Only when media URLs change
+  }, [mediaUrls, imageDimensionsCache, media]); // Dependencies for media loading
 
   // Effect to calculate height when dimensions are loaded or textSectionHeight changes
   useEffect(() => {
@@ -95,11 +147,16 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
 
   return (
     <div 
-      className={`relative w-full overflow-hidden ${className}`}
+      className={`relative w-full overflow-hidden ${className} touch-pan-y focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
       style={{ height: `${containerHeight}px` }}
       role="region"
-      aria-label={`Галерея изображений и видео услуг, ${currentIndex + 1} из ${media.length}`}
+      aria-label={`Галерея изображений и видео услуг, ${currentIndex + 1} из ${media.length}. Используйте стрелки для навигации или свайп на сенсорных устройствах`}
       aria-live="polite"
+      tabIndex={media.length > 1 ? 0 : -1}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onKeyDown={onKeyDown}
     >
       {media[currentIndex]?.type === 'video' ? (
         <video 
