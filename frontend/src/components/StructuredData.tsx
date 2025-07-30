@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ContactsData } from '@/lib/strapiApi';
+import { ContactsData, getImageUrl } from '@/lib/directusApi';
 
 interface StructuredDataProps {
   contactsData?: ContactsData;
@@ -13,10 +13,10 @@ export const StructuredData = ({ contactsData }: StructuredDataProps) => {
       "name": "Александр Пасхалис",
       "jobTitle": "Персональный фитнес тренер",
       "description": "Персональный фитнес тренер с опытом более 15 лет. Эксперт в области силовых тренировок, функциональной подготовки и нутрициологии.",
-      "url": "http://fitness-trainer.online",
-      "image": contactsData?.mainPhoto?.url || "/trainer-hero.jpg",
-      "email": contactsData?.emailAddress || "nr-star@mail.ru",
-      "telephone": contactsData?.phoneNumber || "+79805402021",
+      "url": "https://fitness-trainer.online",
+      "image": contactsData?.main_photo ? getImageUrl(contactsData.main_photo) : undefined,
+      "email": contactsData?.email_address,
+      "telephone": contactsData?.phone_number,
       "knowsAbout": [
         "Персональные тренировки",
         "Силовые тренировки",
@@ -82,22 +82,22 @@ export const StructuredData = ({ contactsData }: StructuredDataProps) => {
       "contactPoint": [
         {
           "@type": "ContactPoint",
-          "telephone": contactsData?.phoneNumber || "+79805402021",
+          "telephone": contactsData?.phone_number,
           "contactType": "customer service",
           "availableLanguage": "Russian"
         },
         {
           "@type": "ContactPoint", 
-          "email": contactsData?.emailAddress || "nr-star@mail.ru",
+          "email": contactsData?.email_address,
           "contactType": "customer service",
           "availableLanguage": "Russian"
         }
       ],
       "sameAs": [
-        contactsData?.telegramLogin ? `https://t.me/${contactsData.telegramLogin}` : "https://t.me/nr_star",
-        contactsData?.instagramLogin ? `https://instagram.com/${contactsData.instagramLogin}` : "https://instagram.com/nr_star",
-        contactsData?.whatsappPhone ? `https://wa.me/${contactsData.whatsappPhone}` : "https://wa.me/79805402021"
-      ],
+        contactsData?.telegram_login ? `https://t.me/${contactsData.telegram_login}` : undefined,
+        contactsData?.instagram_login ? `https://instagram.com/${contactsData.instagram_login}` : undefined,
+        contactsData?.whatsapp_phone ? `https://wa.me/${contactsData.whatsapp_phone}` : undefined
+      ].filter(Boolean),
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "5.0",
