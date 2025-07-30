@@ -73,14 +73,14 @@ export interface FileMetadata {
   title?: string;
 }
 
-// Function to resolve file IDs from junction table without accessing directus_files metadata
+// Function to resolve file IDs and get basic metadata from files endpoint
 export async function resolveMediaIds(junctionIds: number[]): Promise<FileMetadata[]> {
   if (!junctionIds || !Array.isArray(junctionIds)) {
     return [];
   }
 
   try {
-    // Get file IDs from junction table only
+    // Get file IDs from junction table
     const junctionResponse = await fetch(
       `${API_CONFIG.baseURL}/items/services_blocks_files?filter%5Bid%5D%5B_in%5D=${junctionIds.join(',')}`,
       {
@@ -93,16 +93,46 @@ export async function resolveMediaIds(junctionIds: number[]): Promise<FileMetada
     }
 
     const junctionResult = await junctionResponse.json();
-    
-    // Return minimal metadata with file IDs, using /files/ endpoint
-    return junctionResult.data
+    const fileIds = junctionResult.data
       .filter((item: any) => item.directus_files_id)
-      .map((item: any) => ({
-        id: item.directus_files_id,
-        filename_disk: '',
-        type: 'image/jpeg', // Default, will be determined by browser
-        title: undefined
-      }));
+      .map((item: any) => item.directus_files_id);
+
+    // Get file metadata for each file to determine type
+    const fileMetadata = await Promise.all(
+      fileIds.map(async (fileId: string) => {
+        try {
+          const response = await fetch(`${API_CONFIG.baseURL}/files/${fileId}`, {
+            headers: apiHeaders,
+          });
+
+          if (response.ok) {
+            const metadata = await response.json();
+            return {
+              id: fileId,
+              filename_disk: metadata.data?.filename_disk || '',
+              type: metadata.data?.type || 'image/jpeg',
+              title: metadata.data?.title
+            };
+          } else {
+            return {
+              id: fileId,
+              filename_disk: '',
+              type: 'image/jpeg',
+              title: undefined
+            };
+          }
+        } catch (error) {
+          return {
+            id: fileId,
+            filename_disk: '',
+            type: 'image/jpeg',
+            title: undefined
+          };
+        }
+      })
+    );
+
+    return fileMetadata;
   } catch (error) {
     console.error('Error resolving media IDs:', error);
     return [];
