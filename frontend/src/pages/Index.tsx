@@ -8,8 +8,6 @@ import { useState, useEffect } from 'react';
 
 const Index = () => {
   const [scrollY, setScrollY] = useState(0);
-  const [resolvedServices, setResolvedServices] = useState<(ServiceBlockData & { resolvedMedia: FileMetadata[] })[]>([]);
-
   const { data: contactsData, isLoading: contactsLoading } = useQuery<ContactsData>({
     queryKey: ['contacts'],
     queryFn: fetchContacts,
@@ -24,31 +22,34 @@ const Index = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // Use React Query for media resolution to enable caching
+  const { data: resolvedServices, isLoading: mediaLoading } = useQuery({
+    queryKey: ['services-media', servicesData],
+    queryFn: async () => {
+      if (!servicesData || servicesData.length === 0) return [];
+      
+      const resolved = await Promise.all(
+        servicesData.map(async (service) => {
+          if (service.media && service.media.length > 0) {
+            const fileMetadata = await resolveMediaIds(service.media);
+            return { ...service, resolvedMedia: fileMetadata };
+          }
+          return { ...service, resolvedMedia: [] };
+        })
+      );
+      return resolved;
+    },
+    enabled: !!servicesData && servicesData.length > 0,
+    retry: 2,
+    staleTime: 10 * 60 * 1000, // 10 minutes - longer cache for media
+  });
+
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Resolve media IDs when services data is loaded
-  useEffect(() => {
-    if (servicesData && servicesData.length > 0) {
-      const resolveAllMedia = async () => {
-        const resolved = await Promise.all(
-          servicesData.map(async (service) => {
-            if (service.media && service.media.length > 0) {
-              const fileMetadata = await resolveMediaIds(service.media);
-              return { ...service, resolvedMedia: fileMetadata };
-            }
-            return { ...service, resolvedMedia: [] };
-          })
-        );
-        setResolvedServices(resolved);
-      };
-      
-      resolveAllMedia();
-    }
-  }, [servicesData]);
 
   const scrollToContacts = () => {
     const contactsElement = document.getElementById('contacts');
@@ -96,7 +97,7 @@ const Index = () => {
     "Мотивирую людей к занятию спортом личным примером, я всегда в хорошей спортивной форме, и на днях мне исполниться 52 года!"
   ];
 
-  if (contactsLoading || servicesLoading || (servicesData && resolvedServices.length === 0)) {
+  if (contactsLoading || servicesLoading || mediaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
