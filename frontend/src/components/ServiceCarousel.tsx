@@ -22,22 +22,61 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isAnimatingSwipe, setIsAnimatingSwipe] = useState(false);
+  const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
+  // Helper to get container width
+  const getContainerWidth = () => containerRef?.offsetWidth || 400;
+
   const nextMedia = () => {
     if (isTransitioning || media.length <= 1) return;
+    
     setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev + 1) % media.length);
-    setTimeout(() => setIsTransitioning(false), 300);
+    setIsAnimatingSwipe(true);
+    
+    // Get container width for smooth animation
+    const containerWidth = getContainerWidth();
+    
+    // Animate out current image
+    setDragOffset(-containerWidth);
+    
+    // After animation, change image and reset
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % media.length);
+      setDragOffset(0);
+      setIsAnimatingSwipe(false);
+      
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
+    }, 300);
   };
 
   const prevMedia = () => {
     if (isTransitioning || media.length <= 1) return;
+    
     setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
-    setTimeout(() => setIsTransitioning(false), 300);
+    setIsAnimatingSwipe(true);
+    
+    // Get container width for smooth animation
+    const containerWidth = getContainerWidth();
+    
+    // Animate out current image
+    setDragOffset(containerWidth);
+    
+    // After animation, change image and reset
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
+      setDragOffset(0);
+      setIsAnimatingSwipe(false);
+      
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
+    }, 300);
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -77,14 +116,42 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe) {
-      nextMedia();
-    } else if (isRightSwipe) {
-      prevMedia();
+    if (isLeftSwipe || isRightSwipe) {
+      // Start swipe animation
+      setIsAnimatingSwipe(true);
+      setIsTransitioning(true);
+      
+      // Animate to the final position first
+      const containerWidth = getContainerWidth();
+      
+      const finalOffset = isLeftSwipe ? -containerWidth : containerWidth;
+      setDragOffset(finalOffset);
+      
+      // After animation completes, change the image and reset
+      setTimeout(() => {
+        if (isLeftSwipe) {
+          setCurrentIndex((prev) => (prev + 1) % media.length);
+        } else {
+          setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
+        }
+        
+        // Reset without animation
+        setDragOffset(0);
+        setIsAnimatingSwipe(false);
+        
+        // Small delay to ensure smooth transition
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 50);
+      }, 300);
+    } else {
+      // Snap back to original position
+      setIsAnimatingSwipe(true);
+      setDragOffset(0);
+      setTimeout(() => {
+        setIsAnimatingSwipe(false);
+      }, 300);
     }
-    
-    // Reset drag offset with animation
-    setDragOffset(0);
   };
 
   // Helper functions to get adjacent media items
@@ -215,6 +282,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
 
   return (
     <div 
+      ref={setContainerRef}
       className={`relative w-full overflow-hidden ${className} touch-pan-y focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
       style={{ height: `${containerHeight}px` }}
       role="region"
@@ -230,8 +298,8 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
       <div 
         className="relative w-full h-full flex"
         style={{
-          transform: `translateX(${isDragging ? dragOffset : 0}px)`,
-          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          transform: `translateX(${dragOffset}px)`,
+          transition: (isDragging && !isAnimatingSwipe) ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         {/* Previous image (shown when dragging right) */}
@@ -286,10 +354,24 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
               <button
                 key={index}
                 onClick={() => {
-                  if (!isTransitioning) {
+                  if (!isTransitioning && index !== currentIndex) {
                     setIsTransitioning(true);
-                    setCurrentIndex(index);
-                    setTimeout(() => setIsTransitioning(false), 300);
+                    setIsAnimatingSwipe(true);
+                    
+                    // Determine swipe direction
+                    const containerWidth = getContainerWidth();
+                    const direction = index > currentIndex ? -1 : 1;
+                    setDragOffset(direction * containerWidth);
+                    
+                    setTimeout(() => {
+                      setCurrentIndex(index);
+                      setDragOffset(0);
+                      setIsAnimatingSwipe(false);
+                      
+                      setTimeout(() => {
+                        setIsTransitioning(false);
+                      }, 50);
+                    }, 300);
                   }
                 }}
                 disabled={isTransitioning}
