@@ -62,8 +62,7 @@ export function getImageUrl(fileId: string): string {
     return fileId;
   }
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:1337';
-  // Use files endpoint with download parameter to get actual file content
-  return `${baseUrl}/files/${fileId}?download`;
+  return `${baseUrl}/assets/${fileId}`;
 }
 
 

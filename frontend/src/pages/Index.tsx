@@ -13,11 +13,15 @@ const Index = () => {
   const { data: contactsData, isLoading: contactsLoading } = useQuery<ContactsData>({
     queryKey: ['contacts'],
     queryFn: fetchContacts,
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: servicesData, isLoading: servicesLoading } = useQuery<ServiceBlockData[]>({
     queryKey: ['services-blocks'],
     queryFn: fetchServicesBlocks,
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   useEffect(() => {
