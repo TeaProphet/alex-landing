@@ -24,7 +24,6 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isAnimatingSwipe, setIsAnimatingSwipe] = useState(false);
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
-  const [targetIndex, setTargetIndex] = useState<number | null>(null);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
@@ -35,11 +34,8 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
   const nextMedia = () => {
     if (isTransitioning || media.length <= 1) return;
     
-    const nextIndex = (currentIndex + 1) % media.length;
-    
     setIsTransitioning(true);
     setIsAnimatingSwipe(true);
-    setTargetIndex(nextIndex);
     
     // Get container width for smooth animation
     const containerWidth = getContainerWidth();
@@ -47,10 +43,9 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     // Animate out current image
     setDragOffset(-containerWidth);
     
-    // After animation, update current index and reset
+    // After animation, change image and reset
     setTimeout(() => {
-      setCurrentIndex(nextIndex);
-      setTargetIndex(null);
+      setCurrentIndex((prev) => (prev + 1) % media.length);
       setDragOffset(0);
       setIsAnimatingSwipe(false);
       
@@ -63,11 +58,8 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
   const prevMedia = () => {
     if (isTransitioning || media.length <= 1) return;
     
-    const prevIndex = (currentIndex - 1 + media.length) % media.length;
-    
     setIsTransitioning(true);
     setIsAnimatingSwipe(true);
-    setTargetIndex(prevIndex);
     
     // Get container width for smooth animation
     const containerWidth = getContainerWidth();
@@ -75,10 +67,9 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     // Animate out current image
     setDragOffset(containerWidth);
     
-    // After animation, update current index and reset
+    // After animation, change image and reset
     setTimeout(() => {
-      setCurrentIndex(prevIndex);
-      setTargetIndex(null);
+      setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
       setDragOffset(0);
       setIsAnimatingSwipe(false);
       
@@ -126,25 +117,23 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe || isRightSwipe) {
-      // Determine target index
-      const newTargetIndex = isLeftSwipe 
-        ? (currentIndex + 1) % media.length
-        : (currentIndex - 1 + media.length) % media.length;
-      
       // Start swipe animation
       setIsAnimatingSwipe(true);
       setIsTransitioning(true);
-      setTargetIndex(newTargetIndex);
       
       // Animate to the final position first
       const containerWidth = getContainerWidth();
+      
       const finalOffset = isLeftSwipe ? -containerWidth : containerWidth;
       setDragOffset(finalOffset);
       
       // After animation completes, change the image and reset
       setTimeout(() => {
-        setCurrentIndex(newTargetIndex);
-        setTargetIndex(null);
+        if (isLeftSwipe) {
+          setCurrentIndex((prev) => (prev + 1) % media.length);
+        } else {
+          setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
+        }
         
         // Reset without animation
         setDragOffset(0);
@@ -313,16 +302,13 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
           transition: (isDragging && !isAnimatingSwipe) ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        {/* Previous image (shown when dragging right or animating from previous) */}
+        {/* Previous image (shown when dragging right) */}
         {media.length > 1 && (
           <div 
             className="absolute left-0 top-0 w-full h-full"
             style={{ transform: 'translateX(-100%)' }}
           >
-            {renderMediaItem(
-              media[targetIndex !== null && isAnimatingSwipe && dragOffset > 0 ? targetIndex : getPrevIndex()], 
-              targetIndex !== null && isAnimatingSwipe && dragOffset > 0 ? targetIndex : getPrevIndex()
-            )}
+            {renderMediaItem(media[getPrevIndex()], getPrevIndex())}
           </div>
         )}
         
@@ -331,16 +317,13 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
           {renderMediaItem(media[currentIndex], currentIndex)}
         </div>
         
-        {/* Next image (shown when dragging left or animating to next) */}
+        {/* Next image (shown when dragging left) */}
         {media.length > 1 && (
           <div 
             className="absolute right-0 top-0 w-full h-full"
             style={{ transform: 'translateX(100%)' }}
           >
-            {renderMediaItem(
-              media[targetIndex !== null && isAnimatingSwipe && dragOffset < 0 ? targetIndex : getNextIndex()], 
-              targetIndex !== null && isAnimatingSwipe && dragOffset < 0 ? targetIndex : getNextIndex()
-            )}
+            {renderMediaItem(media[getNextIndex()], getNextIndex())}
           </div>
         )}
       </div>
@@ -374,7 +357,6 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
                   if (!isTransitioning && index !== currentIndex) {
                     setIsTransitioning(true);
                     setIsAnimatingSwipe(true);
-                    setTargetIndex(index);
                     
                     // Determine swipe direction
                     const containerWidth = getContainerWidth();
@@ -383,7 +365,6 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
                     
                     setTimeout(() => {
                       setCurrentIndex(index);
-                      setTargetIndex(null);
                       setDragOffset(0);
                       setIsAnimatingSwipe(false);
                       
