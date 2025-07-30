@@ -167,7 +167,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     >
       {/* Carousel container with smooth slide transitions */}
       <div 
-        className="flex h-full transition-transform duration-500 ease-in-out"
+        className="flex w-full h-full transition-transform duration-500 ease-in-out"
         style={{ 
           transform: `translateX(-${currentIndex * 100}%)`,
           width: `${media.length * 100}%`
@@ -176,8 +176,8 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
         {media.map((mediaItem, index) => (
           <div 
             key={index}
-            className="h-full flex-shrink-0"
-            style={{ width: `calc(100% / ${media.length})` }}
+            className="w-full h-full flex-shrink-0"
+            style={{ width: `${100 / media.length}%` }}
           >
             {mediaItem.type === 'video' ? (
               <video 
