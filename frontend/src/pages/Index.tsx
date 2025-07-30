@@ -11,15 +11,19 @@ const Index = () => {
   const { data: contactsData, isLoading: contactsLoading } = useQuery<ContactsData>({
     queryKey: ['contacts'],
     queryFn: fetchContacts,
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
   });
 
   const { data: servicesData, isLoading: servicesLoading } = useQuery<ServiceBlockData[]>({
     queryKey: ['services-blocks'],
     queryFn: fetchServicesBlocks,
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Use React Query for media resolution to enable caching
@@ -40,8 +44,10 @@ const Index = () => {
       return resolved;
     },
     enabled: !!servicesData && servicesData.length > 0,
-    retry: 2,
-    staleTime: 10 * 60 * 1000, // 10 minutes - longer cache for media
+    retry: 1,
+    staleTime: 15 * 60 * 1000, // 15 minutes - longer cache for media
+    cacheTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -97,7 +103,10 @@ const Index = () => {
     "Мотивирую людей к занятию спортом личным примером, я всегда в хорошей спортивной форме, и на днях мне исполниться 52 года!"
   ];
 
-  if (contactsLoading || servicesLoading || mediaLoading) {
+  // Show initial loading only if no data is available yet
+  const showInitialLoading = contactsLoading && servicesLoading && !contactsData && !servicesData;
+  
+  if (showInitialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -115,16 +124,21 @@ const Index = () => {
         {/* Hero Section */}
         <header className="relative h-screen flex items-center justify-center overflow-hidden" role="banner">
         <div className="absolute inset-0">
-          <img 
-            src={contactsData?.main_photo ? getImageUrl(contactsData.main_photo) : '/trainer-hero.jpg'} 
-            alt="Александр Пасхалис - персональный фитнес тренер Россия, онлайн консультации по тренировкам и питанию, 15+ лет опыта" 
-            className="w-full h-[120%] object-cover"
-            loading="eager"
-            fetchpriority="high"
-            style={{
-              transform: `translateY(${scrollY * 0.5}px)`,
-            }}
-          />
+          {contactsLoading ? (
+            // Show gradient background while loading
+            <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-700" />
+          ) : (
+            <img 
+              src={contactsData?.main_photo ? getImageUrl(contactsData.main_photo) : '/trainer-hero.jpg'} 
+              alt="Александр Пасхалис - персональный фитнес тренер Россия, онлайн консультации по тренировкам и питанию, 15+ лет опыта" 
+              className="w-full h-[120%] object-cover"
+              loading="eager"
+              fetchpriority="high"
+              style={{
+                transform: `translateY(${scrollY * 0.5}px)`,
+              }}
+            />
+          )}
           <div className="absolute inset-0 bg-black/40" />
         </div>
         
@@ -202,17 +216,56 @@ const Index = () => {
         {/* Services */}
         <section className="bg-background" aria-labelledby="services-heading">
           <h2 id="services-heading" className="sr-only">Услуги персонального тренера</h2>
-          {resolvedServices?.map((service, index) => (
-            <article key={service.id}>
-              <ServiceSection
-                title={service.title}
-                description={service.text}
-                media={convertFilesToMedia(service.resolvedMedia)}
-                imageLeft={index % 2 !== 0}
-                onContactClick={scrollToContacts}
-              />
-            </article>
-          ))}
+          {resolvedServices && resolvedServices.length > 0 ? (
+            resolvedServices.map((service, index) => (
+              <article key={service.id}>
+                <ServiceSection
+                  title={service.title}
+                  description={service.text}
+                  media={convertFilesToMedia(service.resolvedMedia)}
+                  imageLeft={index % 2 !== 0}
+                  onContactClick={scrollToContacts}
+                />
+              </article>
+            ))
+          ) : servicesData && servicesData.length > 0 ? (
+            // Show services with skeleton media while media is loading
+            servicesData.map((service, index) => (
+              <article key={service.id}>
+                <div className="container mx-auto px-4 py-16">
+                  <div className={`grid lg:grid-cols-2 gap-12 items-center ${index % 2 !== 0 ? 'lg:grid-cols-2' : ''}`}>
+                    <div className={`space-y-6 ${index % 2 !== 0 ? 'lg:order-2' : ''}`}>
+                      <h3 className="text-3xl lg:text-4xl font-bold">{service.title}</h3>
+                      <div className="text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: service.text }} />
+                    </div>
+                    <div className={`${index % 2 !== 0 ? 'lg:order-1' : ''}`}>
+                      <div className="bg-muted rounded-lg animate-pulse" style={{ height: '400px' }}>
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          Загрузка изображений...
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))
+          ) : (
+            // Loading skeleton when no services data yet
+            <div className="container mx-auto px-4 py-16">
+              <div className="animate-pulse space-y-16">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="grid lg:grid-cols-2 gap-12">
+                    <div className="space-y-4">
+                      <div className="h-8 bg-muted rounded w-3/4"></div>
+                      <div className="h-4 bg-muted rounded w-full"></div>
+                      <div className="h-4 bg-muted rounded w-5/6"></div>
+                    </div>
+                    <div className="h-64 bg-muted rounded"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Contacts */}
