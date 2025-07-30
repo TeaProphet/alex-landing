@@ -17,14 +17,7 @@ export interface ServiceBlockData {
   id: number;
   title: string;
   text: string;
-  media?: Array<{
-    directus_files_id: {
-      id: string;
-      filename_disk: string;
-      type: string;
-      title?: string;
-    };
-  }>; // Nested junction data with file metadata
+  media?: number[]; // Junction table IDs
   sort?: number;
 }
 
@@ -48,13 +41,9 @@ export async function fetchContacts(): Promise<ContactsData> {
 
 export async function fetchServicesBlocks(): Promise<ServiceBlockData[]> {
   try {
-    // Fetch services with their media relationships
-    const response = await fetch(
-      `${API_CONFIG.baseURL}/items/services_blocks?fields=*,media.directus_files_id.*&sort=sort`,
-      {
-        headers: apiHeaders,
-      }
-    );
+    const response = await fetch(`${API_CONFIG.baseURL}/items/services_blocks?sort=sort`, {
+      headers: apiHeaders,
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -73,7 +62,7 @@ export function getImageUrl(fileId: string): string {
     return fileId;
   }
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:1337';
-  return `${baseUrl}/assets/${fileId}`;
+  return `${baseUrl}/files/${fileId}`;
 }
 
 
@@ -82,9 +71,43 @@ export interface FileMetadata {
   filename_disk: string;
   type: string;
   title?: string;
-  url?: string; // Direct URL from junction collection
 }
 
+// Function to resolve file IDs from junction table without accessing directus_files metadata
+export async function resolveMediaIds(junctionIds: number[]): Promise<FileMetadata[]> {
+  if (!junctionIds || !Array.isArray(junctionIds)) {
+    return [];
+  }
+
+  try {
+    // Get file IDs from junction table only
+    const junctionResponse = await fetch(
+      `${API_CONFIG.baseURL}/items/services_blocks_files?filter%5Bid%5D%5B_in%5D=${junctionIds.join(',')}`,
+      {
+        headers: apiHeaders,
+      }
+    );
+
+    if (!junctionResponse.ok) {
+      throw new Error(`HTTP error! status: ${junctionResponse.status}`);
+    }
+
+    const junctionResult = await junctionResponse.json();
+    
+    // Return minimal metadata with file IDs, using /files/ endpoint
+    return junctionResult.data
+      .filter((item: any) => item.directus_files_id)
+      .map((item: any) => ({
+        id: item.directus_files_id,
+        filename_disk: '',
+        type: 'image/jpeg', // Default, will be determined by browser
+        title: undefined
+      }));
+  } catch (error) {
+    console.error('Error resolving media IDs:', error);
+    return [];
+  }
+}
 
 // Utility function to detect if filename is a video
 function isVideoFile(filename: string): boolean {
@@ -101,7 +124,7 @@ export function convertFilesToMedia(files: FileMetadata[]): Array<{url: string; 
   }
   
   return files.map(file => {
-    const url = file.url || getImageUrl(file.id);
+    const url = getImageUrl(file.id);
     const isVideo = file.type.startsWith('video/') || isVideoFile(file.filename_disk);
     const type = isVideo ? 'video' : 'image';
     
@@ -111,22 +134,5 @@ export function convertFilesToMedia(files: FileMetadata[]): Array<{url: string; 
       alternativeText: file.title
     };
   });
-}
-
-// New function to convert nested service media to FileMetadata format
-export function convertServiceMediaToFiles(serviceBlock: ServiceBlockData): FileMetadata[] {
-  if (!serviceBlock.media || !Array.isArray(serviceBlock.media)) {
-    return [];
-  }
-  
-  return serviceBlock.media
-    .filter(item => item.directus_files_id) // Filter out null references
-    .map(item => ({
-      id: item.directus_files_id.id,
-      filename_disk: item.directus_files_id.filename_disk || '',
-      type: item.directus_files_id.type || 'image/jpeg',
-      title: item.directus_files_id.title,
-      url: `${API_CONFIG.baseURL}/files/${item.directus_files_id.id}`
-    }));
 }
 

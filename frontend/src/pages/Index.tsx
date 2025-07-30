@@ -3,7 +3,7 @@ import { ServiceSection } from '@/components/ServiceSection';
 import { StructuredData } from '@/components/StructuredData';
 import { Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchContacts, fetchServicesBlocks, getImageUrl, convertFilesToMedia, convertServiceMediaToFiles, type ContactsData, type ServiceBlockData, type FileMetadata } from '@/lib/directusApi';
+import { fetchContacts, fetchServicesBlocks, getImageUrl, convertFilesToMedia, resolveMediaIds, type ContactsData, type ServiceBlockData, type FileMetadata } from '@/lib/directusApi';
 import { useState, useEffect } from 'react';
 
 const Index = () => {
@@ -26,14 +26,23 @@ const Index = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Convert nested media data when services data is loaded
+  // Resolve media IDs when services data is loaded
   useEffect(() => {
     if (servicesData && servicesData.length > 0) {
-      const resolved = servicesData.map((service) => ({
-        ...service,
-        resolvedMedia: convertServiceMediaToFiles(service)
-      }));
-      setResolvedServices(resolved);
+      const resolveAllMedia = async () => {
+        const resolved = await Promise.all(
+          servicesData.map(async (service) => {
+            if (service.media && service.media.length > 0) {
+              const fileMetadata = await resolveMediaIds(service.media);
+              return { ...service, resolvedMedia: fileMetadata };
+            }
+            return { ...service, resolvedMedia: [] };
+          })
+        );
+        setResolvedServices(resolved);
+      };
+      
+      resolveAllMedia();
     }
   }, [servicesData]);
 
@@ -83,7 +92,7 @@ const Index = () => {
     "Мотивирую людей к занятию спортом личным примером, я всегда в хорошей спортивной форме, и на днях мне исполниться 52 года!"
   ];
 
-  if (contactsLoading || servicesLoading) {
+  if (contactsLoading || servicesLoading || (servicesData && resolvedServices.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
