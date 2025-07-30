@@ -19,23 +19,16 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
   const [containerHeight, setContainerHeight] = useState(400);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
   const nextMedia = () => {
-    if (isTransitioning || media.length <= 1) return;
-    setIsTransitioning(true);
     setCurrentIndex((prev) => (prev + 1) % media.length);
-    setTimeout(() => setIsTransitioning(false), 500);
   };
 
   const prevMedia = () => {
-    if (isTransitioning || media.length <= 1) return;
-    setIsTransitioning(true);
     setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
-    setTimeout(() => setIsTransitioning(false), 500);
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -63,7 +56,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (media.length <= 1 || isTransitioning) return;
+    if (media.length <= 1) return;
     
     switch (e.key) {
       case 'ArrowLeft':
@@ -165,55 +158,37 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
       onTouchEnd={onTouchEnd}
       onKeyDown={onKeyDown}
     >
-      {/* Carousel container with smooth slide transitions */}
-      <div 
-        className="flex w-full h-full transition-transform duration-500 ease-in-out"
-        style={{ 
-          transform: `translateX(-${currentIndex * 100}%)`,
-          width: `${media.length * 100}%`
-        }}
-      >
-        {media.map((mediaItem, index) => (
-          <div 
-            key={index}
-            className="w-full h-full flex-shrink-0"
-            style={{ width: `${100 / media.length}%` }}
-          >
-            {mediaItem.type === 'video' ? (
-              <video 
-                src={mediaItem.url}
-                className="w-full h-full object-cover"
-                controls
-                preload="metadata"
-                playsInline
-                muted
-                onError={(e) => {
-                  console.error('Video loading error:', e, 'URL:', mediaItem.url);
-                }}
-                onLoadStart={() => {
-                  console.log('Video loading started:', mediaItem.url);
-                }}
-                aria-label={mediaItem.alternativeText || `Видео услуги ${index + 1} - персональные тренировки и консультации с фитнес тренером`}
-              />
-            ) : (
-              <img 
-                src={mediaItem.url} 
-                alt={mediaItem.alternativeText || `Фото услуги ${index + 1} - персональные тренировки и консультации с фитнес тренером`}
-                className="w-full h-full object-cover"
-                loading={index === 0 ? "eager" : "lazy"}
-                decoding="async"
-              />
-            )}
-          </div>
-        ))}
-      </div>
+      {media[currentIndex]?.type === 'video' ? (
+        <video 
+          src={media[currentIndex].url}
+          className="w-full h-full object-cover transition-all duration-500"
+          controls
+          preload="metadata"
+          playsInline
+          muted
+          onError={(e) => {
+            console.error('Video loading error:', e, 'URL:', media[currentIndex].url);
+          }}
+          onLoadStart={() => {
+            console.log('Video loading started:', media[currentIndex].url);
+          }}
+          aria-label={media[currentIndex].alternativeText || `Видео услуги ${currentIndex + 1} - персональные тренировки и консультации с фитнес тренером`}
+        />
+      ) : (
+        <img 
+          src={media[currentIndex]?.url} 
+          alt={media[currentIndex]?.alternativeText || `Фото услуги ${currentIndex + 1} - персональные тренировки и консультации с фитнес тренером`}
+          className="w-full h-full object-cover transition-all duration-500"
+          loading="lazy"
+          decoding="async"
+        />
+      )}
       
       {media.length > 1 && (
         <>
           <button
             onClick={prevMedia}
-            disabled={isTransitioning}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={`Предыдущее изображение (${currentIndex === 0 ? media.length : currentIndex} из ${media.length})`}
             title="Предыдущее изображение"
           >
@@ -221,8 +196,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
           </button>
           <button
             onClick={nextMedia}
-            disabled={isTransitioning}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={`Следующее изображение (${currentIndex + 2 > media.length ? 1 : currentIndex + 2} из ${media.length})`}
             title="Следующее изображение"
           >
@@ -233,14 +207,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
             {media.map((_, index) => (
               <button
                 key={index}
-                onClick={() => {
-                  if (!isTransitioning) {
-                    setIsTransitioning(true);
-                    setCurrentIndex(index);
-                    setTimeout(() => setIsTransitioning(false), 500);
-                  }
-                }}
-                disabled={isTransitioning}
+                onClick={() => setCurrentIndex(index)}
                 className={`p-3 min-w-[44px] min-h-[44px] flex items-center justify-center transition-smooth`}
                 role="tab"
                 aria-selected={index === currentIndex}
