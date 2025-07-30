@@ -28,46 +28,70 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
 
   // Memoize the media URLs to prevent recalculation when only textSectionHeight changes
   const mediaUrls = useMemo(() => media.map(m => m.url).join(','), [media]);
+  
+  // Cache for image dimensions to prevent reloading
+  const [imageDimensionsCache, setImageDimensionsCache] = useState<Record<string, number>>({});
 
+  // Effect to load image dimensions only when media changes
   useEffect(() => {
-    const calculateHeight = async () => {
+    const loadImageDimensions = async () => {
       if (media.length === 0) return;
-
-      const mediaHeights: number[] = [];
-      const viewportWidth = window.innerWidth * 0.5;
       
-      // Calculate height for each media item when width is 50vw
+      const viewportWidth = window.innerWidth * 0.5;
+      const newCache: Record<string, number> = {};
+      
       for (const mediaItem of media) {
-        try {
-          if (mediaItem.type === 'video') {
-            // For videos, use a standard 16:9 aspect ratio as default
-            const calculatedHeight = viewportWidth / (16/9);
-            mediaHeights.push(calculatedHeight);
-          } else {
-            // For images, use default aspect ratio instead of loading them
-            // This prevents unnecessary image requests during scroll
-            const calculatedHeight = viewportWidth / 1.5; // Default 3:2 aspect ratio
-            mediaHeights.push(calculatedHeight);
+        if (mediaItem.type === 'video') {
+          // For videos, use a standard 16:9 aspect ratio
+          newCache[mediaItem.url] = viewportWidth / (16/9);
+        } else if (!imageDimensionsCache[mediaItem.url]) {
+          // Only load images that aren't already cached
+          try {
+            const height = await new Promise<number>((resolve) => {
+              const img = new Image();
+              img.onload = () => {
+                const aspectRatio = img.width / img.height;
+                const calculatedHeight = viewportWidth / aspectRatio;
+                resolve(calculatedHeight);
+              };
+              img.onerror = () => resolve(viewportWidth / 1.5); // fallback height
+              img.src = mediaItem.url;
+            });
+            newCache[mediaItem.url] = height;
+          } catch {
+            newCache[mediaItem.url] = viewportWidth / 1.5; // fallback height
           }
-        } catch {
-          mediaHeights.push(viewportWidth / 1.5); // fallback height
+        } else {
+          // Use cached dimension
+          newCache[mediaItem.url] = imageDimensionsCache[mediaItem.url];
         }
       }
       
-      // Calculate medium (average) height of all media items
-      const averageHeight = mediaHeights.reduce((sum, height) => sum + height, 0) / mediaHeights.length;
-      
-      // Use the larger of average height or text section height
-      let finalHeight = Math.max(averageHeight, textSectionHeight || 0);
-      
-      // Apply reasonable bounds
-      finalHeight = Math.max(400, Math.min(800, finalHeight));
-      
-      setContainerHeight(finalHeight);
+      setImageDimensionsCache(prev => ({ ...prev, ...newCache }));
     };
 
-    calculateHeight();
-  }, [mediaUrls, textSectionHeight]);
+    loadImageDimensions();
+  }, [mediaUrls]); // Only when media URLs change
+
+  // Effect to calculate height when dimensions are loaded or textSectionHeight changes
+  useEffect(() => {
+    if (media.length === 0) return;
+
+    const mediaHeights = media.map(mediaItem => 
+      imageDimensionsCache[mediaItem.url] || (window.innerWidth * 0.5) / 1.5
+    );
+    
+    // Calculate average height of all media items
+    const averageHeight = mediaHeights.reduce((sum, height) => sum + height, 0) / mediaHeights.length;
+    
+    // Use the larger of average height or text section height
+    let finalHeight = Math.max(averageHeight, textSectionHeight || 0);
+    
+    // Apply reasonable bounds
+    finalHeight = Math.max(400, Math.min(800, finalHeight));
+    
+    setContainerHeight(finalHeight);
+  }, [media, imageDimensionsCache, textSectionHeight]);
 
   return (
     <div 
