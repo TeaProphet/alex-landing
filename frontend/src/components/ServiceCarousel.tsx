@@ -13,35 +13,8 @@ interface ServiceCarouselProps {
   textSectionHeight: number;
 }
 
-// Utility function to detect if URL is a video
-const isVideoUrl = (url: string): boolean => {
-  const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
-  const videoMimeTypes = ['video/', 'application/mp4'];
-  
-  // Check file extension
-  const hasVideoExtension = videoExtensions.some(ext => 
-    url.toLowerCase().includes(ext)
-  );
-  
-  // Check if it's a video URL pattern (YouTube, Vimeo, etc.)
-  const isVideoService = /(?:youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com)/i.test(url);
-  
-  return hasVideoExtension || isVideoService;
-};
 
-// Convert legacy images array to media items
-const convertImagesToMedia = (images: string[]): MediaItem[] => {
-  return images.map(url => ({
-    url,
-    type: isVideoUrl(url) ? 'video' : 'image' as const
-  }));
-};
-
-export const ServiceCarousel = ({ media: propMedia, className = '', textSectionHeight }: ServiceCarouselProps) => {
-  // Support backward compatibility with images prop
-  const media = Array.isArray(propMedia) && typeof propMedia[0] === 'string' 
-    ? convertImagesToMedia(propMedia as unknown as string[])
-    : propMedia;
+export const ServiceCarousel = ({ media, className = '', textSectionHeight }: ServiceCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [containerHeight, setContainerHeight] = useState(400);
 

@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 interface ServiceSectionProps {
   title: string;
   description: string;
-  media: CarouselMediaItem[] | string[]; // Support both formats for backward compatibility
+  media: CarouselMediaItem[];
   imageLeft?: boolean;
   onContactClick: () => void;
 }
@@ -18,10 +18,6 @@ export const ServiceSection = ({
   imageLeft = false,
   onContactClick 
 }: ServiceSectionProps) => {
-  // Convert legacy images array to media format if needed
-  const mediaItems: CarouselMediaItem[] = Array.isArray(media) && typeof media[0] === 'string'
-    ? (media as string[]).map(url => ({ url, type: 'image' as const }))
-    : media as CarouselMediaItem[];
   const [textSectionHeight, setTextSectionHeight] = useState(0);
   const textRef = useRef<HTMLDivElement>(null);
 
@@ -45,9 +41,10 @@ export const ServiceSection = ({
             <h3 className="text-xl font-bold text-foreground">
               {title}
             </h3>
-            <div className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm">
-              {description}
-            </div>
+            <div 
+              className="text-muted-foreground leading-relaxed text-sm prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
             <Button 
               onClick={onContactClick}
               className="bg-gradient-primary hover:opacity-90 text-white font-bold px-6 py-4 text-base rounded-lg shadow-elegant transition-all duration-300 hover:scale-105"
@@ -59,7 +56,7 @@ export const ServiceSection = ({
         
         {/* Image Section - Mobile */}
         <div className="w-full">
-          <ServiceCarousel media={mediaItems} textSectionHeight={0} />
+          <ServiceCarousel media={media} textSectionHeight={0} />
         </div>
       </div>
 
@@ -67,7 +64,7 @@ export const ServiceSection = ({
       <div className={`hidden md:flex ${imageLeft ? 'flex-row-reverse' : ''}`}>
         {/* Image Section - Desktop 50% */}
         <div className="w-1/2">
-          <ServiceCarousel media={mediaItems} textSectionHeight={textSectionHeight} />
+          <ServiceCarousel media={media} textSectionHeight={textSectionHeight} />
         </div>
         
         {/* Text Section - Desktop 50% */}
@@ -78,9 +75,10 @@ export const ServiceSection = ({
             <h3 className="text-2xl lg:text-4xl font-bold text-foreground">
               {title}
             </h3>
-            <div className="text-muted-foreground leading-relaxed whitespace-pre-line text-base lg:text-lg">
-              {description}
-            </div>
+            <div 
+              className="text-muted-foreground leading-relaxed text-base lg:text-lg prose prose-base max-w-none [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_li]:mb-1 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
             <Button 
               onClick={onContactClick}
               className="bg-gradient-primary hover:opacity-90 text-white font-bold px-8 py-6 text-lg rounded-lg shadow-elegant transition-all duration-300 hover:scale-105"

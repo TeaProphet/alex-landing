@@ -3,11 +3,12 @@ import { ServiceSection } from '@/components/ServiceSection';
 import { StructuredData } from '@/components/StructuredData';
 import { Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchContacts, fetchServicesBlocks, getImageUrl, convertPhotosToMedia, type ContactsData, type ServiceBlockData } from '@/lib/strapiApi';
+import { fetchContacts, fetchServicesBlocks, getImageUrl, convertFilesToMedia, resolveMediaIds, type ContactsData, type ServiceBlockData, type FileMetadata } from '@/lib/directusApi';
 import { useState, useEffect } from 'react';
 
 const Index = () => {
   const [scrollY, setScrollY] = useState(0);
+  const [resolvedServices, setResolvedServices] = useState<(ServiceBlockData & { resolvedMedia: FileMetadata[] })[]>([]);
 
   const { data: contactsData, isLoading: contactsLoading } = useQuery<ContactsData>({
     queryKey: ['contacts'],
@@ -25,9 +26,62 @@ const Index = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Resolve media IDs when services data is loaded
+  useEffect(() => {
+    if (servicesData && servicesData.length > 0) {
+      const resolveAllMedia = async () => {
+        const resolved = await Promise.all(
+          servicesData.map(async (service) => {
+            if (service.media && service.media.length > 0) {
+              const fileMetadata = await resolveMediaIds(service.media);
+              return { ...service, resolvedMedia: fileMetadata };
+            }
+            return { ...service, resolvedMedia: [] };
+          })
+        );
+        setResolvedServices(resolved);
+      };
+      
+      resolveAllMedia();
+    }
+  }, [servicesData]);
+
   const scrollToContacts = () => {
     const contactsElement = document.getElementById('contacts');
     contactsElement?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Function to parse HTML content into list items
+  const parseAboutText = (htmlText: string) => {
+    if (!htmlText) return [];
+    
+    // If it's HTML content, extract text from <p> or <li> tags
+    if (htmlText.includes('<')) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+      
+      // Try to find list items first
+      const listItems = doc.querySelectorAll('li');
+      if (listItems.length > 0) {
+        return Array.from(listItems).map(li => li.textContent?.trim() || '').filter(text => text.length > 0);
+      }
+      
+      // If no list items, try paragraphs
+      const paragraphs = doc.querySelectorAll('p');
+      if (paragraphs.length > 0) {
+        return Array.from(paragraphs).map(p => p.textContent?.trim() || '').filter(text => text.length > 0);
+      }
+      
+      // Fallback: return plain text content
+      return [doc.body.textContent?.trim() || ''].filter(text => text.length > 0);
+    }
+    
+    // Legacy: Handle dash-separated text
+    return htmlText
+      .split('\n')
+      .filter(line => line.trim().startsWith('-'))
+      .map(line => line.replace(/^-\s*/, '').trim())
+      .filter(line => line.length > 0);
   };
 
   const defaultAboutItems = [
@@ -38,7 +92,7 @@ const Index = () => {
     "Мотивирую людей к занятию спортом личным примером, я всегда в хорошей спортивной форме, и на днях мне исполниться 52 года!"
   ];
 
-  if (contactsLoading || servicesLoading) {
+  if (contactsLoading || servicesLoading || (servicesData && resolvedServices.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -57,11 +111,11 @@ const Index = () => {
         <header className="relative h-screen flex items-center justify-center overflow-hidden" role="banner">
         <div className="absolute inset-0">
           <img 
-            src={contactsData?.mainPhoto?.url ? getImageUrl(contactsData.mainPhoto.url) : '/trainer-hero.jpg'} 
+            src={contactsData?.main_photo ? getImageUrl(contactsData.main_photo) : '/trainer-hero.jpg'} 
             alt="Александр Пасхалис - персональный фитнес тренер Россия, онлайн консультации по тренировкам и питанию, 15+ лет опыта" 
             className="w-full h-[120%] object-cover"
             loading="eager"
-            fetchPriority="high"
+            fetchpriority="high"
             style={{
               transform: `translateY(${scrollY * 0.5}px)`,
             }}
@@ -77,17 +131,17 @@ const Index = () => {
             Ваш персональный фитнес тренер
           </h2>
           <div className="text-lg lg:text-xl space-y-2">
-            {contactsData?.emailAddress && <p>{contactsData.emailAddress}</p>}
-            {contactsData?.phoneNumber && <p>{contactsData.phoneNumber}</p>}
+            {contactsData?.email_address && <p>{contactsData.email_address}</p>}
+            {contactsData?.phone_number && <p>{contactsData.phone_number}</p>}
           </div>
         </div>
         
         <div className="absolute top-8 right-8 z-10">
           <SocialIcons 
             variant="light" 
-            telegramLogin={contactsData?.telegramLogin}
-            instagramLogin={contactsData?.instagramLogin}
-            whatsappPhone={contactsData?.whatsappPhone}
+            telegramLogin={contactsData?.telegram_login}
+            instagramLogin={contactsData?.instagram_login}
+            whatsappPhone={contactsData?.whatsapp_phone}
           />
         </div>
         
@@ -119,21 +173,20 @@ const Index = () => {
             <h2 id="about-heading" className="text-3xl lg:text-4xl font-bold text-center mb-12">Обо мне</h2>
           
           <div className="space-y-6">
-            {contactsData?.aboutInfo ? (
-              <div 
-                className="text-lg leading-relaxed prose max-w-none" 
-                dangerouslySetInnerHTML={{ __html: contactsData.aboutInfo }}
-              />
-            ) : (
-              defaultAboutItems.map((text, index) => (
-              <div key={index} className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center mt-1">
-                  <Check size={18} className="text-white" />
+            {(() => {
+              const aboutItems = contactsData?.about_info 
+                ? parseAboutText(contactsData.about_info)
+                : defaultAboutItems;
+              
+              return aboutItems.map((text, index) => (
+                <div key={index} className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center mt-1">
+                    <Check size={18} className="text-white" />
+                  </div>
+                  <p className="text-lg leading-relaxed">{text}</p>
                 </div>
-                <p className="text-lg leading-relaxed">{text}</p>
-              </div>
-              ))
-            )}
+              ));
+            })()}
           </div>
         </div>
       </section>
@@ -141,12 +194,12 @@ const Index = () => {
         {/* Services */}
         <section className="bg-background" aria-labelledby="services-heading">
           <h2 id="services-heading" className="sr-only">Услуги персонального тренера</h2>
-          {servicesData?.map((service, index) => (
+          {resolvedServices?.map((service, index) => (
             <article key={service.id}>
               <ServiceSection
                 title={service.title}
                 description={service.text}
-                media={convertPhotosToMedia(service.photos)}
+                media={convertFilesToMedia(service.resolvedMedia)}
                 imageLeft={index % 2 !== 0}
                 onContactClick={scrollToContacts}
               />
@@ -171,15 +224,15 @@ const Index = () => {
             <SocialIcons 
               variant="light" 
               className="scale-125"
-              telegramLogin={contactsData?.telegramLogin}
-              instagramLogin={contactsData?.instagramLogin}
-              whatsappPhone={contactsData?.whatsappPhone}
+              telegramLogin={contactsData?.telegram_login}
+              instagramLogin={contactsData?.instagram_login}
+              whatsappPhone={contactsData?.whatsapp_phone}
             />
           </div>
           
           <div className="text-white/80 space-y-2">
-            {contactsData?.emailAddress && <p>{contactsData.emailAddress}</p>}
-            {contactsData?.phoneNumber && <p>{contactsData.phoneNumber}</p>}
+            {contactsData?.email_address && <p>{contactsData.email_address}</p>}
+            {contactsData?.phone_number && <p>{contactsData.phone_number}</p>}
           </div>
         </div>
         </footer>

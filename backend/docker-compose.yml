@@ -1,0 +1,22 @@
+version: '3'
+services:
+  directus:
+    image: directus/directus:10.10.0
+    ports:
+      - 1337:8055
+    volumes:
+      - ./database:/directus/database
+      - ./uploads:/directus/uploads
+    environment:
+      KEY: 'directus-alex-landing-key-2024'
+      SECRET: 'directus-alex-landing-secret-2024'
+      DB_CLIENT: 'sqlite3'
+      DB_FILENAME: '/directus/database/database.sqlite'
+      ADMIN_EMAIL: 'admin@example.com'
+      ADMIN_PASSWORD: 'password123'
+      PUBLIC_URL: 'http://localhost:1337'
+      LANGUAGE: 'ru-RU'
+      ASSETS_CACHE_TTL: '30d'
+      CORS_ENABLED: 'true'
+      CORS_ORIGIN: 'http://localhost:8080'
+    restart: unless-stopped

@@ -2,7 +2,30 @@
   "permissions": {
     "allow": [
       "Bash(npm run lint)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(bash:*)",
+      "Bash(rm:*)",
+      "Bash(chmod:*)",
+      "WebFetch(domain:help.reg.ru)",
+      "WebFetch(domain:www.reg.ru)",
+      "Bash(npm start)",
+      "Bash(pm2 list:*)",
+      "Bash(move strapiApi.ts directusApi.ts)",
+      "Bash(mv:*)",
+      "Bash(npm install)",
+      "Bash(docker-compose up:*)",
+      "Bash(npm run dev:*)",
+      "Bash(docker-compose:*)",
+      "Bash(timeout 15 docker-compose logs -f directus)",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(timeout 10 docker-compose logs directus)",
+      "Bash(curl:*)",
+      "Bash(./fix-services-media.sh:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": []
   }

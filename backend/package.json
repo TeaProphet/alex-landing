@@ -1,43 +1,19 @@
 {
-  "name": "alex-landing",
+  "name": "alex-landing-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "A Strapi application",
+  "description": "Directus backend for Alex Landing",
   "scripts": {
-    "build": "set NODE_OPTIONS=--max-old-space-size=1536 --optimize-for-size && strapi build --minify false",
-    "build:prod": "NODE_OPTIONS='--max-old-space-size=1536 --optimize-for-size' strapi build --minify false",
-    "build:low-memory": "node build-low-memory.js",
-    "console": "strapi console",
-    "deploy": "strapi deploy",
-    "dev": "strapi develop",
-    "develop": "strapi develop",
-    "start": "strapi start",
-    "strapi": "strapi",
-    "upgrade": "npx @strapi/upgrade latest",
-    "upgrade:dry": "npx @strapi/upgrade latest --dry"
+    "dev": "directus start",
+    "start": "directus start",
+    "bootstrap": "directus bootstrap",
+    "init": "directus database install"
   },
   "dependencies": {
-    "@strapi/plugin-cloud": "5.18.1",
-    "@strapi/plugin-users-permissions": "5.18.1",
-    "@strapi/strapi": "5.18.1",
-    "better-sqlite3": "11.3.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "react-router-dom": "^6.0.0",
-    "styled-components": "^6.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "typescript": "^5"
+    "directus": "^10.10.0",
+    "sqlite3": "^5.1.6"
   },
   "engines": {
-    "node": ">=18.0.0 <=22.x.x",
-    "npm": ">=6.0.0"
-  },
-  "strapi": {
-    "uuid": "56028760-6c11-47de-a9df-09e494ad433c",
-    "installId": "1ba26de76f33f4257dbe8be62c03773656ff7871e9d6777a44291ebe8385c9fb"
+    "node": ">=18.0.0"
   }
 }
