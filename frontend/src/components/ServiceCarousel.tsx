@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Carousel } from 'antd';
+import type { CarouselRef } from 'antd/es/carousel';
+import { useRef } from 'react';
 
 interface MediaItem {
   url: string;
@@ -13,76 +15,15 @@ interface ServiceCarouselProps {
   textSectionHeight: number;
 }
 
-
 export const ServiceCarousel = ({ media, className = '', textSectionHeight }: ServiceCarouselProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [containerHeight, setContainerHeight] = useState(400);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
+  const carouselRef = useRef<CarouselRef>(null);
 
-  // Minimum swipe distance (in px)
-  const minSwipeDistance = 50;
-
-  const nextMedia = () => {
-    setCurrentIndex((prev) => (prev + 1) % media.length);
-  };
-
-  const prevMedia = () => {
-    setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
-  };
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(0); // Reset touchEnd
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe && media.length > 1) {
-      nextMedia();
-    }
-    if (isRightSwipe && media.length > 1) {
-      prevMedia();
-    }
-  };
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (media.length <= 1) return;
-    
-    switch (e.key) {
-      case 'ArrowLeft':
-        e.preventDefault();
-        prevMedia();
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
-        nextMedia();
-        break;
-      case 'Home':
-        e.preventDefault();
-        setCurrentIndex(0);
-        break;
-      case 'End':
-        e.preventDefault();
-        setCurrentIndex(media.length - 1);
-        break;
-    }
-  };
+  // Cache for image dimensions to prevent reloading
+  const [imageDimensionsCache, setImageDimensionsCache] = useState<Record<string, number>>({});
 
   // Memoize the media URLs to prevent recalculation when only textSectionHeight changes
   const mediaUrls = useMemo(() => media.map(m => m.url).join(','), [media]);
-  
-  // Cache for image dimensions to prevent reloading
-  const [imageDimensionsCache, setImageDimensionsCache] = useState<Record<string, number>>({});
 
   // Effect to load image dimensions only when media changes
   useEffect(() => {
@@ -123,7 +64,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     };
 
     loadImageDimensions();
-  }, [mediaUrls, imageDimensionsCache, media]); // Dependencies for media loading
+  }, [mediaUrls, imageDimensionsCache, media]);
 
   // Effect to calculate height when dimensions are loaded or textSectionHeight changes
   useEffect(() => {
@@ -145,84 +86,60 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
     setContainerHeight(finalHeight);
   }, [media, imageDimensionsCache, textSectionHeight]);
 
+  if (media.length === 0) {
+    return null;
+  }
+
   return (
     <div 
-      className={`relative w-full overflow-hidden ${className} touch-pan-y focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
+      className={`relative w-full ${className}`}
       style={{ height: `${containerHeight}px` }}
       role="region"
-      aria-label={`Галерея изображений и видео услуг, ${currentIndex + 1} из ${media.length}. Используйте стрелки для навигации или свайп на сенсорных устройствах`}
-      aria-live="polite"
-      tabIndex={media.length > 1 ? 0 : -1}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onKeyDown={onKeyDown}
+      aria-label={`Галерея изображений и видео услуг, ${media.length} элементов. Используйте стрелки для навигации или свайп на сенсорных устройствах`}
     >
-      {media[currentIndex]?.type === 'video' ? (
-        <video 
-          src={media[currentIndex].url}
-          className="w-full h-full object-cover transition-all duration-500"
-          controls
-          preload="metadata"
-          playsInline
-          muted
-          onError={(e) => {
-            console.error('Video loading error:', e, 'URL:', media[currentIndex].url);
-          }}
-          onLoadStart={() => {
-            console.log('Video loading started:', media[currentIndex].url);
-          }}
-          aria-label={media[currentIndex].alternativeText || `Видео услуги ${currentIndex + 1} - персональные тренировки и консультации с фитнес тренером`}
-        />
-      ) : (
-        <img 
-          src={media[currentIndex]?.url} 
-          alt={media[currentIndex]?.alternativeText || `Фото услуги ${currentIndex + 1} - персональные тренировки и консультации с фитнес тренером`}
-          className="w-full h-full object-cover transition-all duration-500"
-          loading="lazy"
-          decoding="async"
-        />
-      )}
-      
-      {media.length > 1 && (
-        <>
-          <button
-            onClick={prevMedia}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
-            aria-label={`Предыдущее изображение (${currentIndex === 0 ? media.length : currentIndex} из ${media.length})`}
-            title="Предыдущее изображение"
-          >
-            <ChevronLeft size={20} aria-hidden="true" />
-          </button>
-          <button
-            onClick={nextMedia}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-smooth z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
-            aria-label={`Следующее изображение (${currentIndex + 2 > media.length ? 1 : currentIndex + 2} из ${media.length})`}
-            title="Следующее изображение"
-          >
-            <ChevronRight size={20} aria-hidden="true" />
-          </button>
-          
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10" role="tablist" aria-label="Индикаторы слайдов">
-            {media.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`p-3 min-w-[44px] min-h-[44px] flex items-center justify-center transition-smooth`}
-                role="tab"
-                aria-selected={index === currentIndex}
-                aria-controls={`slide-${index}`}
-                aria-label={`Перейти к изображению ${index + 1} из ${media.length}`}
-                title={`Показать изображение ${index + 1}`}
-              >
-                <div className={`w-2.5 h-2.5 rounded-full transition-smooth ${
-                  index === currentIndex ? 'bg-white shadow-lg' : 'bg-white/60 hover:bg-white/80'
-                }`} />
-              </button>
-            ))}
+      <Carousel
+        ref={carouselRef}
+        arrows
+        dots
+        infinite
+        swipeToSlide
+        touchMove
+        className="h-full"
+        dotPosition="bottom"
+        effect="scrollx"
+      >
+        {media.map((mediaItem, index) => (
+          <div key={index} className="h-full">
+            <div className="h-full" style={{ height: `${containerHeight}px` }}>
+              {mediaItem.type === 'video' ? (
+                <video 
+                  src={mediaItem.url}
+                  className="w-full h-full object-cover"
+                  controls
+                  preload="metadata"
+                  playsInline
+                  muted
+                  onError={(e) => {
+                    console.error('Video loading error:', e, 'URL:', mediaItem.url);
+                  }}
+                  onLoadStart={() => {
+                    console.log('Video loading started:', mediaItem.url);
+                  }}
+                  aria-label={mediaItem.alternativeText || `Видео услуги ${index + 1} - персональные тренировки и консультации с фитнес тренером`}
+                />
+              ) : (
+                <img 
+                  src={mediaItem.url} 
+                  alt={mediaItem.alternativeText || `Фото услуги ${index + 1} - персональные тренировки и консультации с фитнес тренером`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
+            </div>
           </div>
-        </>
-      )}
+        ))}
+      </Carousel>
     </div>
   );
 };
