@@ -57,9 +57,13 @@ const Index = () => {
   }, []);
 
 
-  const scrollToContacts = () => {
-    const contactsElement = document.getElementById('contacts');
-    contactsElement?.scrollIntoView({ behavior: 'smooth' });
+  const handleContactClick = () => {
+    if (contactsData?.telegram_login) {
+      window.open(`https://t.me/${contactsData.telegram_login}`, '_blank');
+    } else {
+      const contactsElement = document.getElementById('contacts');
+      contactsElement?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   // Function to parse HTML content into list items
@@ -246,7 +250,7 @@ const Index = () => {
                   description={service.text}
                   media={convertFilesToMedia(service.resolvedMedia)}
                   imageLeft={index % 2 !== 0}
-                  onContactClick={scrollToContacts}
+                  onContactClick={handleContactClick}
                 />
               </article>
             ))

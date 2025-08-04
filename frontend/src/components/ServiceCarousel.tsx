@@ -3,7 +3,7 @@ import { Carousel } from 'antd';
 import type { CarouselRef } from 'antd/es/carousel';
 import { useRef } from 'react';
 
-interface MediaItem {
+export interface MediaItem {
   url: string;
   type: 'image' | 'video';
   alternativeText?: string;

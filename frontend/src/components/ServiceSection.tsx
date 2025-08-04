@@ -49,7 +49,7 @@ export const ServiceSection = ({
               onClick={onContactClick}
               className="bg-gradient-primary hover:opacity-90 text-white font-bold px-6 py-4 text-base rounded-lg shadow-elegant transition-all duration-300 hover:scale-105 min-h-[44px]"
               aria-label="Связаться с тренером для получения этой услуги"
-              title="Перейти к контактам для связи"
+              title="Написать в Telegram"
             >
               ХОЧУ
             </Button>
@@ -85,7 +85,7 @@ export const ServiceSection = ({
               onClick={onContactClick}
               className="bg-gradient-primary hover:opacity-90 text-white font-bold px-8 py-6 text-lg rounded-lg shadow-elegant transition-all duration-300 hover:scale-105 min-h-[44px]"
               aria-label="Связаться с тренером для получения этой услуги"
-              title="Перейти к контактам для связи"
+              title="Написать в Telegram"
             >
               ХОЧУ
             </Button>
