@@ -143,16 +143,23 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight, back
               {mediaItem.type === 'video' ? (
                 <video 
                   src={mediaItem.url}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                   controls
                   preload="metadata"
                   playsInline
                   muted
+                  poster=""
+                  webkit-playsinline="true"
                   onError={(e) => {
                     console.error('Video loading error:', e, 'URL:', mediaItem.url);
                   }}
                   onLoadStart={() => {
                     console.log('Video loading started:', mediaItem.url);
+                  }}
+                  onLoadedMetadata={(e) => {
+                    // Force iOS to generate a preview frame
+                    const video = e.target as HTMLVideoElement;
+                    video.currentTime = 0.1;
                   }}
                   aria-label={mediaItem.alternativeText || `Видео услуги ${index + 1} - персональные тренировки и консультации с фитнес тренером`}
                 />
