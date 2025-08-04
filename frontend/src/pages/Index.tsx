@@ -244,13 +244,14 @@ const Index = () => {
           <h2 id="services-heading" className="sr-only">Услуги персонального тренера</h2>
           {resolvedServices && resolvedServices.length > 0 ? (
             resolvedServices.map((service, index) => (
-              <article key={service.id}>
+              <article key={service.id} className={index % 2 !== 0 ? 'bg-muted/30' : 'bg-background'}>
                 <ServiceSection
                   title={service.title}
                   description={service.text}
                   media={convertFilesToMedia(service.resolvedMedia)}
                   imageLeft={index % 2 !== 0}
                   onContactClick={handleContactClick}
+                  backgroundColor={index % 2 !== 0 ? 'muted' : 'default'}
                 />
               </article>
             ))

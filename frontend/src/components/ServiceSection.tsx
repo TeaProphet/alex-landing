@@ -3,12 +3,14 @@ import type { MediaItem as CarouselMediaItem } from './ServiceCarousel';
 import { Button } from './ui/button';
 import { useState, useRef, useEffect } from 'react';
 
+
 interface ServiceSectionProps {
   title: string;
   description: string;
   media: CarouselMediaItem[];
   imageLeft?: boolean;
   onContactClick: () => void;
+  backgroundColor?: 'default' | 'muted';
 }
 
 export const ServiceSection = ({ 
@@ -16,7 +18,8 @@ export const ServiceSection = ({
   description, 
   media, 
   imageLeft = false,
-  onContactClick 
+  onContactClick,
+  backgroundColor = 'default'
 }: ServiceSectionProps) => {
   const [textSectionHeight, setTextSectionHeight] = useState(0);
   const textRef = useRef<HTMLDivElement>(null);
@@ -58,7 +61,7 @@ export const ServiceSection = ({
         
         {/* Image Section - Mobile */}
         <div className="w-full">
-          <ServiceCarousel media={media} textSectionHeight={0} />
+          <ServiceCarousel media={media} textSectionHeight={0} backgroundColor={backgroundColor} />
         </div>
       </div>
 
@@ -66,7 +69,7 @@ export const ServiceSection = ({
       <div className={`hidden md:flex ${imageLeft ? 'flex-row-reverse' : ''}`}>
         {/* Image Section - Desktop 50% */}
         <div className="w-1/2">
-          <ServiceCarousel media={media} textSectionHeight={textSectionHeight} />
+          <ServiceCarousel media={media} textSectionHeight={textSectionHeight} backgroundColor={backgroundColor} />
         </div>
         
         {/* Text Section - Desktop 50% */}
