@@ -104,7 +104,7 @@ export const ServiceCarousel = ({ media, className = '', textSectionHeight }: Se
         infinite
         swipeToSlide
         touchMove
-        className="h-full"
+        className="h-full [&_.slick-prev]:!w-12 [&_.slick-prev]:!h-12 [&_.slick-next]:!w-12 [&_.slick-next]:!h-12 [&_.slick-prev::after]:!w-6 [&_.slick-prev::after]:!h-6 [&_.slick-next::after]:!w-6 [&_.slick-next::after]:!h-6"
         dotPosition="bottom"
         effect="scrollx"
       >
