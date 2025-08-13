@@ -205,7 +205,7 @@ const Index = () => {
             <div className="text-center">
               <div 
                 id="intro-heading" 
-                className="text-lg lg:text-xl leading-relaxed text-muted-foreground"
+                className="text-lg lg:text-xl leading-relaxed text-left text-black"
                 dangerouslySetInnerHTML={{
                   __html: contactsData?.greeting || 
                     "Привет! Меня зовут Александр, я персональный фитнес тренер. Создатель божественных фигур. Гуру в сфере тренинга и нутрициологии. Приведу Вас к любой цели, от \"просто похудеть\" - до выхода на соревнования! Со мной ваша забота о себе под профессиональным контролем круглосуточно!"
@@ -231,7 +231,7 @@ const Index = () => {
                   <div className="flex-shrink-0 w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center mt-1">
                     <Check size={18} className="text-white" />
                   </div>
-                  <p className="text-lg leading-relaxed">{text}</p>
+                  <p className="text-lg leading-relaxed text-left text-black">{text}</p>
                 </div>
               ));
             })()}
